@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{EC1, spatial players} (companion to Table~\ref{tab:synth-spatial}), mean $\pm$ spread across the classifier architectures that pass the accuracy criterion (Appendix~\ref{app:clf_gate}), game-matched grading.}
+\label{tab:app-ec1-spatial}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccc}
+\toprule
+Method & \texttt{gauss} & \texttt{skeleton} & \texttt{burr} & \texttt{gait} & \texttt{skel+gait} \\
+\midrule
+\multicolumn{6}{l}{\emph{Standard imputers, graded against the marginal ground truth $\gtstd$}} \\
+KS-Zero & \textbf{0.000} \msd{0.000} & \textbf{0.001} \msd{0.001} & \textbf{0.000} \msd{0.000} & \textbf{0.002} \msd{0.001} & \textbf{0.002} \msd{0.001} \\
+KS-Mean & 0.003 \msd{0.002} & 0.002 \msd{0.001} & 0.002 \msd{0.001} & 0.006 \msd{0.006} & 0.004 \msd{0.001} \\
+KS-Marginal & 0.093 \msd{0.042} & 0.030 \msd{0.018} & 0.099 \msd{0.045} & 0.024 \msd{0.023} & 0.027 \msd{0.017} \\
+KS-Empirical & 0.127 \msd{0.053} & 0.042 \msd{0.023} & 0.132 \msd{0.058} & 0.034 \msd{0.032} & 0.042 \msd{0.024} \\
+\addlinespace
+\multicolumn{6}{l}{\emph{Generative imputers, graded against the conditional ground truth $\gtman$}} \\
+KS-VAEAC & 0.077 \msd{0.037} & 0.036 \msd{0.019} & 0.064 \msd{0.030} & 0.027 \msd{0.026} & 0.044 \msd{0.021} \\
+KS-Flow & 0.116 \msd{0.053} & 0.046 \msd{0.025} & 0.121 \msd{0.057} & 0.024 \msd{0.023} & 0.038 \msd{0.020} \\
+KS-Gauss (closed form) & 0.088 \msd{0.044} & 0.040 \msd{0.022} & 0.095 \msd{0.046} & 0.031 \msd{0.029} & 0.035 \msd{0.020} \\
+\midrule
+KS-Oracle (reference) & 0.081 \msd{0.041} & 0.030 \msd{0.018} & 0.082 \msd{0.041} & 0.023 \msd{0.022} & 0.025 \msd{0.015} \\
+\bottomrule
+\end{tabular}
+\end{table}

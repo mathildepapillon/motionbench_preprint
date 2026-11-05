@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Cross-graded EC3, spatiotemporal players}: all methods against the on-manifold ground truth. At $\np{=}68$ (\texttt{skel+gait} cells) the estimating standard imputers' cross-graded error is three to five times their game-matched error (Table~\ref{tab:synth-cells}): at fine granularity the two ground truths assign very different credit across cells.}
+\label{tab:app-cross-cells}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccc}
+\toprule
+Method & \texttt{gauss} & \texttt{skeleton} & \texttt{burr} & \texttt{gait} & \texttt{skel+gait} \\
+\midrule
+\multicolumn{6}{l}{\emph{Standard imputers, graded against the conditional ground truth}} \\
+KS-Zero & 0.31 \msd{0.10} & 0.31 \msd{0.10} & 0.33 \msd{0.08} & 0.55 \msd{0.05} & 0.72 \msd{0.03} \\
+KS-Mean & 0.31 \msd{0.10} & 0.31 \msd{0.10} & 0.33 \msd{0.07} & 0.55 \msd{0.04} & 0.72 \msd{0.03} \\
+KS-Marginal & 0.34 \msd{0.06} & 0.35 \msd{0.05} & 0.39 \msd{0.04} & 0.59 \msd{0.06} & 0.71 \msd{0.04} \\
+KS-Empirical & 0.39 \msd{0.01} & 0.38 \msd{0.02} & 0.45 \msd{0.02} & 0.58 \msd{0.07} & 0.66 \msd{0.02} \\
+\addlinespace
+\multicolumn{6}{l}{\emph{Generative imputers, graded against the conditional ground truth (as in the main tables)}} \\
+KS-VAEAC & 0.20 \msd{0.05} & \textbf{0.22} \msd{0.02} & \textbf{0.24} \msd{0.03} & 0.48 \msd{0.09} & 0.57 \msd{0.01} \\
+KS-Flow & 0.26 \msd{0.05} & 0.29 \msd{0.05} & 0.32 \msd{0.03} & 0.40 \msd{0.11} & 0.53 \msd{0.01} \\
+KS-Gauss (closed form) & \textbf{0.14} \msd{0.03} & 0.22 \msd{0.03} & 0.24 \msd{0.03} & \textbf{0.38} \msd{0.13} & \textbf{0.36} \msd{0.07} \\
+\midrule
+KS-Oracle (reference) & 0.13 \msd{0.03} & 0.18 \msd{0.02} & 0.20 \msd{0.02} & 0.21 \msd{0.08} & 0.22 \msd{0.05} \\
+\bottomrule
+\end{tabular}
+\end{table}

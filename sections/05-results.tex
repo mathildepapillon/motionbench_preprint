@@ -1,0 +1,90 @@
+% =====================================================================
+\section{Results}
+\label{sec:results}
+\label{sec:salient}
+% =====================================================================
+
+\paragraph{Protocol.} MotionBench-XAI evaluates every method with identical amounts of coalitions at each player set, ensuring identical amounts of classifier evaluations per explanation (Appendix~\ref{app:coalition_protocol}). Every run uses up to $N{=}200$ sequences per fold. Synthetic numbers are averaged over the participating classifier architectures, and $\pm$ is the spread across architectures. Real-data numbers are averaged over the three data folds, and $\pm$ is the spread across folds. A classifier participates if and only if it performs at least $0.05$ above chance and has a train--test gap of at most $0.30$. This criterion excludes the CNN on the two periodic synthetic datasets (overfitting). Per-classifier accuracies are in Appendix~\ref{app:clf_gate}. Synthetic tables
+(Tables~\ref{tab:synth-temporal}--\ref{tab:synth-cells}) report $\ECthree$ under game-matched grading (method is scored against the ground truth of its own imputer family). $\ECone$, the mean absolute credit error, and the cross-graded convention are in Appendix~\ref{app:ec1_table}.
+
+
+\subsection{Synthetic suite: ground-truth grading}
+\label{sec:results-synth}
+
+Tables~\ref{tab:synth-temporal}--\ref{tab:synth-cells} score every method on every dataset at the three player sets. The KS-Oracle row runs KernelSHAP with the exact conditional imputer under the same protocol as every other method. The ground truth fills hidden players with the exact conditional \emph{mean}, while KS-Oracle, like every stochastic imputer, averages $R{=}5$ random draws of the hidden players. Its nonzero error therefore measures the cost of the shared protocol itself. Namely, it accounts for the finite draws and, at player sets too large to enumerate every coalition, the shared sampled coalition design (Appendix~\ref{app:oracle_proofs}). Thus the row serves as a reference: error above it reflects the quality of a method's imputer.
+
+\input{tables/tab_temporal}
+\input{tables/tab_synth_players}
+
+\paragraph{Result 1: Choosing a good player set is the first step towards achieving meaningful explanations.}
+On periodic data like \texttt{gait} and \texttt{skel+gait}
+(Table~\ref{tab:synth-temporal}), temporal players are unsurprisingly meaningless: they contain the same information and thus receive uniform attribution values. On the other hand, spatial players provide useful insights. For example, on \texttt{skel+gait}, KS-VAEAC's $\ECthree$ falls from $0.87$ for temporal players to $0.22$ for spatial players (Table~\ref{tab:synth-spatial}a). This is a clearcut example of how correctly choosing players is key in determining explanation usefulness. % The takeaway is to always choose players under which the question has an answer before choosing an imputer.
+
+\paragraph{Result 2: Generative imputers are accurate  so long as their conditional models are accurate.}
+Under game-matched grading, KS-VAEAC reaches the lowest $\ECthree$ among the displayed methods on every non-periodic dataset at temporal and spatial players (Tables~\ref{tab:synth-temporal} and~\ref{tab:synth-spatial}a). KS-Flow trails it by $0.10$--$0.29$ on the same columns. At joint$\times$window cells, the learned-imputer advantage over KS-Marginal disappears on \texttt{skeleton} and \texttt{burr}: differences are at most $0.005$, below the target variability reported in Appendix~\ref{app:noise_floors}. KS-Gauss has the lowest error on \texttt{gauss} cells and is competitive on \texttt{skeleton} and \texttt{burr} (Table~\ref{tab:synth-cells}b). In summary, the closed-form conditional imputers are just as good as the learned imputers so long as they correctly describe the data.
+
+\paragraph{Result 3: Fine granularity has a measurable evaluation cost.}
+At joint$\times$window cells, the grading targets are computed on sampled coalition designs and carry approximation error. We measure this error by recomputing each target using a new set of coalitions. For \texttt{skeleton} cells ($M{=}68$), increasing the target budget from $8{,}192$ to $32{,}768$ coalitions reduces conditional-target disagreement from $\ECthree \approx 0.12$ to $\approx 0.03$ (Appendix~\ref{app:noise_floors}). As such, fine-grained method comparisons must be interpreted alongside this target uncertainty.
+
+\paragraph{Result 4: Grading everything against one ground truth mixes up two different questions.} Prior oracle benchmarks grade every method against the conditional ground truth \citep{aas2021explaining,olsen2022using}, including methods that estimate the marginal game. On our centered data, KS-Zero implements the exact marginal imputation. Its temporal $\ECthree$ on \texttt{gauss} is $0.00$ under game-matched grading but $0.25$ when graded against the conditional target (Appendix~\ref{app:cond_tables}). This error reflects the different targets rather than an inaccurate marginal explanation. The takeaway is the importance of stating the intended game first, then grading against that game's ground truth.
+
+\subsection{Real-world suite: no oracle}
+\label{sec:results-real}
+
+Table~\ref{tab:real-faith} evaluates the KernelSHAP family on the three real datasets with the two standard no-oracle metrics, across temporal and spatial player sets. Temporal SHAP variants build in their own temporal players, and KS-Gauss requires a fitted Gaussian model of the full tensor. Hence, both are compared only on the synthetic suite. Joint$\times$window results for CARE-PD and ESC-50 are in Appendix~\ref{app:real_cells}.
+
+\input{tables/tab_real}
+
+\paragraph{Result 5: Without a ground truth, the two standard metrics disagree, and the best method changes with the dataset.}
+On CARE-PD temporal players, faithfulness assigns the highest score to KS-Marginal ($0.96$ and $0.95$ on models A and B; Table~\ref{tab:real-faith}a), while PlayerAOPC ranks KS-Mean highest ($0.29$ and $0.35$; Table~\ref{tab:real-aopc}b). Yet, on ESC-50, KS-Marginal scores highest on both metrics for temporal players. No single method is best across datasets and player sets (Appendix~\ref{app:real_best}). This underscores the importance of comparing possible explanation designs going beyond choice of metric. In view of doing this in practice, we propose a practitioner decision guide in Fig. \ref{fig:decision}. % to help apply these findings. % in a real-world setting.
+
+\begin{figure}
+\centering
+\setlength{\fboxsep}{3pt}%
+\fbox{\begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}\small
+\setlist[enumerate]{topsep=1pt,itemsep=2pt,parsep=2pt,leftmargin=1.4em}%
+\textbf{Setting up a Shapley analysis: three questions to answer.}
+\begin{enumerate}
+\item \textbf{What is known about the data's distribution?}
+  If the distribution is known analytically, use the exact conditional
+  imputer. If it can be learned from data, train a generative imputer and check that it can reconstruct a hidden player well. If neither holds, use a standard
+  imputer (marginal game).
+\item \textbf{What is the goal of the explanation?}
+  Match the players to the question. Temporal explanations cells for temporal players, and so on. More players means better precision (assuming the estimator is good) but also more model evaluations at explanation time.
+\item \textbf{How will the explanation be scored?}
+  With a ground truth, grade each method against the game its imputer
+  plays, recording what that ground truth represents. Without one, report faithfulness and PlayerAOPC together. Only compare
+  PlayerAOPC values within one player set.
+\end{enumerate}
+\end{minipage}}
+\captionsetup{justification=raggedright,singlelinecheck=false}
+\caption{\textbf{Practitioner decision guide.}
+Setup procedure, further described in Appendix~\ref{app:guide}.}
+\label{fig:decision}
+\end{figure}
+% \begin{figure}
+% \centering
+% \setlength{\fboxsep}{3pt}%
+% \fbox{\begin{minipage}{1.\linewidth}\small
+% \setlist[enumerate]{topsep=1pt,itemsep=1pt,parsep=0pt,leftmargin=1.4em}%
+% \textbf{Setting up a Shapley analysis: three questions to answer.}
+% \begin{enumerate}[leftmargin=1.4em]
+% \item \textbf{What is known about the data's distribution?}
+%   Analytically known $\to$ exact conditional or closed-form
+%   Gaussian imputer. Learnable $\to$ generative imputer \emph{with} a
+%   hide-one-reconstruct capability check.  Neither $\to$ standard imputer,
+%   interpreted as the marginal game.
+% \item \textbf{What is the goal of the explanation?}
+%   Which phase of the movement $\to$ temporal windows.  Which anatomical unit $\to$ spatial players.  Fine localization $\to$ cells, with the budget and
+%   the grading error floor reported.  Periodic data $+$ temporal windows: the
+%   conditional game may be unmeasurable.
+% \item \textbf{How will the explanation be scored?}
+%   Ground truth available $\to$ EC1/EC3, game-matched, game declared.
+%   None $\to$ faithfulness \emph{and} PlayerAOPC together, with disagreement
+%   expected, and no AOPC comparisons across granularities.
+% \end{enumerate}
+% \end{minipage}}
+% \caption{\textbf{Practitioner decision guide.}  The benchmark's findings as
+% a setup procedure, further described in Appendix~\ref{app:guide}.}
+% \label{fig:decision}
+% \end{figure}

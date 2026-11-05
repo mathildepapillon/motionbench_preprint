@@ -1,0 +1,42 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Real-world results.} Panel (a): faithfulness correlation between summed hidden credits and the prediction drop. Panel (b): PlayerAOPC, the mean drop along the deletion path. Mean $\pm$ spread across data folds; bold: best per column and panel. AOPC magnitudes are comparable within a column.}
+\label{tab:real-faith}
+\label{tab:real-aopc}
+\footnotesize
+(a) \emph{Faithfulness correlation ($\uparrow$)}\\[2pt]
+\setlength{\tabcolsep}{4pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccccccc}
+\toprule
+ & \multicolumn{4}{c}{\emph{Temporal players}} & \multicolumn{4}{c}{\emph{Spatial players}} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+Method & \shortstack{CARE-PD\\{\scriptsize model A, windows}} & \shortstack{CARE-PD\\{\scriptsize model B, windows}} & \shortstack{PTB-XL\\{\scriptsize windows}} & \shortstack{ESC-50\\{\scriptsize windows}} & \shortstack{PTB-XL\\{\scriptsize per lead}} & \shortstack{CARE-PD\\{\scriptsize model A, joints}} & \shortstack{CARE-PD\\{\scriptsize model B, joints}} & \shortstack{ESC-50\\{\scriptsize freq.\ bands}} \\
+\midrule
+KS-Zero & 0.86 \msd{0.02} & 0.46 \msd{0.05} & 0.88 \msd{0.01} & 0.88 \msd{0.01} & \textbf{0.66} \msd{0.03} & \textbf{0.91} \msd{0.03} & 0.45 \msd{0.02} & 0.78 \msd{0.01} \\
+KS-Mean & 0.83 \msd{0.12} & 0.82 \msd{0.08} & 0.88 \msd{0.01} & 0.88 \msd{0.01} & 0.66 \msd{0.03} & 0.76 \msd{0.07} & 0.42 \msd{0.09} & 0.79 \msd{0.01} \\
+KS-Marginal & \textbf{0.96} \msd{0.02} & \textbf{0.95} \msd{0.02} & \textbf{0.91} \msd{0.01} & \textbf{0.92} \msd{0.00} & 0.52 \msd{0.01} & 0.81 \msd{0.02} & \textbf{0.56} \msd{0.11} & 0.84 \msd{0.01} \\
+\addlinespace
+KS-VAEAC & 0.69 \msd{0.05} & 0.73 \msd{0.08} & 0.85 \msd{0.04} & 0.91 \msd{0.00} & 0.55 \msd{0.04} & 0.03 \msd{0.35} & 0.30 \msd{0.06} & \textbf{0.87} \msd{0.01} \\
+KS-Flow & 0.66 \msd{0.05} & 0.68 \msd{0.01} & 0.63 \msd{0.02} & 0.90 \msd{0.01} & 0.64 \msd{0.01} & 0.29 \msd{0.17} & 0.45 \msd{0.09} & 0.86 \msd{0.01} \\
+\bottomrule
+\end{tabular}}
+\\[6pt]
+(b) \emph{PlayerAOPC ($\uparrow$)}\\[2pt]
+\setlength{\tabcolsep}{4pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccccccc}
+\toprule
+ & \multicolumn{4}{c}{\emph{Temporal players}} & \multicolumn{4}{c}{\emph{Spatial players}} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+Method & \shortstack{CARE-PD\\{\scriptsize model A, windows}} & \shortstack{CARE-PD\\{\scriptsize model B, windows}} & \shortstack{PTB-XL\\{\scriptsize windows}} & \shortstack{ESC-50\\{\scriptsize windows}} & \shortstack{PTB-XL\\{\scriptsize per lead}} & \shortstack{CARE-PD\\{\scriptsize model A, joints}} & \shortstack{CARE-PD\\{\scriptsize model B, joints}} & \shortstack{ESC-50\\{\scriptsize freq.\ bands}} \\
+\midrule
+KS-Zero & -0.14 \msd{0.26} & 0.19 \msd{0.06} & 0.19 \msd{0.03} & 0.77 \msd{0.00} & 0.47 \msd{0.04} & -0.08 \msd{0.23} & \textbf{0.43} \msd{0.13} & 0.54 \msd{0.01} \\
+KS-Mean & \textbf{0.29} \msd{0.09} & \textbf{0.35} \msd{0.11} & 0.19 \msd{0.03} & 0.78 \msd{0.00} & 0.47 \msd{0.04} & \textbf{0.18} \msd{0.05} & 0.33 \msd{0.09} & 0.55 \msd{0.01} \\
+KS-Marginal & 0.12 \msd{0.05} & 0.16 \msd{0.07} & 0.18 \msd{0.01} & \textbf{0.88} \msd{0.01} & 0.37 \msd{0.03} & 0.08 \msd{0.08} & 0.18 \msd{0.02} & \textbf{0.79} \msd{0.02} \\
+\addlinespace
+KS-VAEAC & 0.09 \msd{0.04} & 0.20 \msd{0.02} & \textbf{0.59} \msd{0.03} & 0.82 \msd{0.00} & 0.45 \msd{0.06} & 0.03 \msd{0.04} & 0.08 \msd{0.01} & 0.69 \msd{0.01} \\
+KS-Flow & 0.11 \msd{0.02} & 0.17 \msd{0.01} & 0.27 \msd{0.04} & 0.85 \msd{0.01} & \textbf{0.58} \msd{0.05} & 0.05 \msd{0.02} & 0.13 \msd{0.01} & 0.75 \msd{0.02} \\
+\bottomrule
+\end{tabular}}
+\end{table}

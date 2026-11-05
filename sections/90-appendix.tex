@@ -1,0 +1,887 @@
+% =====================================================================
+% APPENDIX
+% All numbers in this file are read off the generated tables in
+% paper/tables/ (built by make_tables.py from the canonical result JSONs)
+% or restate protocol constants from Section 5; see PROVENANCE.md.
+% =====================================================================
+
+\begin{table}[t]
+  \centering
+  \caption{\textbf{Notation.}  The four benchmark axes and their symbols.}
+  \label{tab:notation}
+  \footnotesize
+  \renewcommand{\arraystretch}{0.92}
+  \begin{tabular}{lll}
+    \toprule
+    & Symbol & Meaning \\
+    \midrule
+    \multicolumn{3}{l}{\emph{Data}} \\
+    & $\x \in \mathbb{R}^{J\times F\times T}$ & instance: $J$ spatial units, $F$ coords, $T$ frames \\
+    & $\clf$ & trained classifier being explained \\
+    \addlinespace
+    \multicolumn{3}{l}{\emph{Players}} \\
+    & $\Pset$, $\np$ & player set (a partition of $\x$), number of players \\
+    & $\coal \subseteq \Pset$ & coalition of visible players \\
+    \addlinespace
+    \multicolumn{3}{l}{\emph{Imputation and game}} \\
+    & $\fillx{\coal}$ & $\x$ with players outside $\coal$ imputed \\
+    & $\val(\coal) = \clf(\fillx{\coal})$ & value of coalition $\coal$ \\
+    & $\shap_i$, $\shaphat$ & Shapley value of player $i$; estimated attribution \\
+    \addlinespace
+    \multicolumn{3}{l}{\emph{Ground truths and metrics}} \\
+    & $\gtstd$, $\gtman$ & exact Shapley values of the marginal / conditional game \\
+    & $\ECone$, $\ECthree$ & error in credit sizes / credit rankings (synthetic) \\
+    & Faith., PlayerAOPC & deletion-based scores (real data, no oracle) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Coalition Sampling Protocol}
+\label{app:coalition_protocol}
+
+Every attribution in this paper (every method row and every grading
+target) is produced by one estimator run on one shared coalition design.
+This appendix specifies both.  The tables can then be read with the
+guarantee the main text relies on: no difference between two methods at the
+same player set can come from the estimation layer.
+
+\paragraph{The estimator.}
+Given a design $\mathcal{Z}$ of coalitions, always containing the empty and
+full coalitions, every method solves the KernelSHAP weighted least-squares
+problem
+\begin{equation}
+  \bigl(\hat\phi_0, \shaphat\bigr) \;=\; \arg\min_{\phi_0,\,\shap}\;
+  \sum_{\coal \in \mathcal{Z}} \pi_{\np}(\coal)\,
+  \Bigl[\val(\coal) - \phi_0 - \textstyle\sum_{i \in \coal} \shap_i\Bigr]^2,
+  \qquad
+  \pi_{\np}(\coal) \;=\; \frac{\np - 1}{\binom{\np}{|\coal|}\,|\coal|\,\bigl(\np - |\coal|\bigr)},
+  \label{eq:wls}
+\end{equation}
+where $\pi_{\np}$ is the Shapley kernel, $\np$ the player count, and
+$\phi_0$ the intercept (the value of the empty coalition).  The empty and
+full coalitions enter as constraints, implemented as boundary rows with
+pinning weight $10^{6}$, so the credits plus intercept sum exactly to the
+full-coalition value (the efficiency identity).  The normal
+matrix carries a ridge of $10^{-8}$ for numerical stability.
+
+Every value $\val(\coal) = \clf(\fillx{\coal})$ uses the same completion
+semantics: the hidden entries of $\fillx{\coal}$ are the \emph{average} of
+the imputer's draws, and the classifier is evaluated once on that average
+($f$-of-mean semantics, Appendix~\ref{app:oracle_proofs}).  The zero and
+mean imputations are deterministic.  Every stochastic imputer averages the
+same $R{=}5$ draws per coalition: the imputers that copy from other
+sequences (KS-Marginal, KS-Empirical), the conditional models (KS-Gauss,
+KS-VAEAC, KS-Flow), and the KS-Oracle reference, which draws from the exact
+conditional law.  On the real datasets every imputer uses a single
+completion.  KS-Marginal and KS-Empirical copy from the $N{=}200$
+evaluation pool, and KS-Empirical's kernel weighting excludes the explained
+sequence from its own pool of source sequences.
+
+\paragraph{Exact designs ($\np \leq 12$).}
+Whenever $\np \leq 12$, the design enumerates all $2^{\np}$ coalitions and
+~\eqref{eq:wls} recovers the Shapley values of the (finite-draw) game
+exactly.  This covers every temporal track ($K \in \{4,5\}$ windows), the
+spatial tracks of the synthetic datasets with $J{=}5$ joints, the PTB-XL
+per-lead track ($\np{=}12$, $4096$ coalitions), and the ESC-50
+frequency-band track ($\np{=}4$).
+
+\paragraph{Sampled designs ($\np > 12$).}
+Above $12$ players the design is built in two stages.  First, complete size
+pairs $(s, \np{-}s)$ are enumerated in kernel-mass order, for as long as the
+whole pair fits inside the budget $B$.  The total kernel mass of size $s$ is
+proportional to $(\np{-}1)/[s(\np{-}s)]$, so the extreme sizes come first.
+Every enumerated row carries its exact kernel weight $\pi_{\np}(\coal)$.
+
+Second, the remaining budget is filled by sampling coalitions without
+replacement from the leftover sizes, with size probability proportional to
+kernel mass.  Each sampled row carries an importance-corrected uniform
+weight (the total leftover kernel mass divided by the number of sampled
+rows).  The sampled block is thus a stand-in for the sizes it
+represents.  All weights are computed in log space (no binomial-coefficient
+overflow at $\np{=}68$), rescaled so the largest non-boundary weight is
+$1$, with boundary rows pinned at $10^{6}$.
+
+\paragraph{Shared designs and budgets.}
+In the sampled regime, the design for each (dataset, player set, budget) is
+drawn once, from seed $7919$, and reused verbatim by every method.  Methods
+differ only in the imputer that defines $\val(\coal)$, never in which
+coalitions they see.  (Exact designs need no seed: every method sees the
+full enumeration.)
+
+The two grading targets are built by the same design generator at their own,
+higher budget.  A method's distance to its target therefore includes the
+pure design-budget gap, which Appendix~\ref{app:noise_floors} measures
+directly.  Method budgets are $B{=}1024$ on the sampled synthetic tracks at
+$\np \in \{17, 20, 25\}$ and $B{=}2048$ at $\np{=}68$ and on every sampled
+real-data track ($\np \in \{16, 17, 48, 68\}$).  Grading targets are
+computed from the same design generator at high budget ($B{=}8192$, raised
+to $B{=}32{,}768$ at $\np{=}68$), and exactly (full enumeration) wherever
+$\np \leq 12$.  The residual noise of the sampled targets is measured
+directly in Appendix~\ref{app:noise_floors}.  Every cell evaluates
+$N{=}200$ sequences per dataset and per fold on the real data (CARE-PD's
+middle fold holds $180$), three folds pooled.
+
+\paragraph{Metrics on sampled designs.}
+On the real data, faithfulness is the Pearson correlation over all $B{+}2$
+design rows, including the two boundary rows, mirroring the enumerated
+protocol.  The PlayerAOPC deletion-path coalitions (players removed in
+decreasing-credit order) are generally not design rows and are evaluated
+explicitly.  WindowSHAP and TimeSHAP construct their temporal players
+internally (\S\ref{sec:bg-imputation}) and are graded on the same targets as
+every other temporal-player method.
+
+\section{Oracle Ground Truths: Statements and Proofs}
+\label{app:oracle_proofs}
+
+The synthetic suite is designed so that both estimands of
+\S\ref{sec:bg-gt} (the marginal imputation $\mathbb{E}[x_i]$ and the conditional
+imputation $\mathbb{E}[x_i \mid \x_{\mathrm{vis}}]$) are available in closed
+form.  Every dataset shares one generative structure: a latent Gaussian
+field $\bm{z}$ with Kronecker covariance
+$\operatorname{Cov}(\operatorname{vec}\bm{z}) = \Sigma_J \otimes I_F
+\otimes \Sigma_T$, mapped to observations either directly (Gaussian
+marginals) or through a heavy-tailed copula.  Because the designer chooses
+$\Sigma_J$, $\Sigma_T$, and the marginal family, both expectations have
+closed forms.  This makes both ground truths exactly computable for any trained
+classifier.  This appendix states and proves that claim, then connects it to
+the grading-target construction used throughout the paper.
+
+\begin{proposition}[Exact ground truths on the synthetic families]
+\label{prop:oracle}
+Let $\bm{z}$ be the latent Kronecker Gaussian field of a synthetic dataset,
+$\operatorname{Cov}(\operatorname{vec}\bm{z}) = \Sigma_J \otimes I_F \otimes
+\Sigma_T$, and let the observation $\x$ be either $\bm{z}$ itself (Gaussian
+marginals) or its coordinatewise copula transform
+$x = \operatorname{sign}(z)\,Q_{\mathrm{Burr}}(2\Phi(|z|){-}1;\,2,2)$ (Burr
+marginals).  Fix any trained classifier $\clf$ and any player set $\Pset$
+with $\np$ players.  Then:
+\begin{enumerate}[label=(\roman*)]
+\item the exact marginal imputation is $\mathbb{E}[x_{jft}] = 0$ for every
+  coordinate;
+\item for every coalition $\coal$, the exact conditional imputation
+  $\mathbb{E}[\x_{\mathrm{hid}} \mid \x_{\mathrm{obs}}]$ is available in
+  closed form: a linear map of the observed coordinates in the Gaussian case,
+  and a one-dimensional integral per hidden coordinate in the Burr case,
+  computable to any prescribed accuracy;
+\item consequently the two games
+  $\val^{\star\mathrm{-std}}(\coal) = \clf(\x \text{ with hidden entries set
+  to } 0)$ and
+  $\val^{\star\mathrm{-man}}(\coal) = \clf(\x \text{ with hidden entries set
+  to } \mathbb{E}[\x_{\mathrm{hid}} \mid \x_{\mathrm{obs}}])$ are
+  deterministic and exactly evaluable, and for $\np \leq 12$ the ground
+  truths $\gtstd$ and $\gtman$ follow from exact enumeration of
+  ~\eqref{eq:shapley}.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+\emph{(i)}  The latent field is centered, so in the Gaussian case
+$\mathbb{E}[x_{jft}] = 0$ directly.  The symmetric Burr transform is an odd
+function of $z$ applied to a symmetric variable, so each transformed marginal
+is symmetric about zero and its mean is again exactly zero.  The exact
+marginal imputation is therefore the zero imputation on every family.
+
+\emph{(ii)}  Since $\Sigma_F = I_F$, the $F$ coordinate slices are
+independent and each carries the covariance $\Sigma = \Sigma_J \otimes
+\Sigma_T$ over the $(j,t)$ grid.  For a coalition $\coal$, let $o$ and $h$
+index the observed and hidden $(j,t)$ positions.  By standard multivariate
+Gaussian conditioning,
+\begin{equation*}
+  \bm{z}_h \mid \bm{z}_o \;\sim\; \mathcal{N}\!\bigl(
+    \Sigma_{ho}\Sigma_{oo}^{-1}\bm{z}_o,\;
+    \Sigma_{hh} - \Sigma_{ho}\Sigma_{oo}^{-1}\Sigma_{oh}\bigr),
+\end{equation*}
+where the Kronecker structure enters only through the efficient construction
+of the sub-blocks.  In the Gaussian case $\x = \bm{z}$ and the conditional
+mean $W_{\coal}\,\x_{\mathrm{obs}}$ with $W_{\coal} =
+\Sigma_{ho}\Sigma_{oo}^{-1}$ is the exact imputation.  $W_{\coal}$ is computed once
+per coalition and applied to all $N$ sequences.  In the Burr case the copula
+transform is a coordinatewise strictly monotone bijection with analytic
+inverse, so the observed coordinates map exactly to latent coordinates and
+conditioning happens in the latent field as above.  Each hidden observation
+coordinate is then the image $g(z) =
+\operatorname{sign}(z)\,Q_{\mathrm{Burr}}(2\Phi(|z|){-}1)$ of a univariate
+normal $z \sim \mathcal{N}(\mu, \sigma^2)$, with $\mu, \sigma$ from the
+display above.  Its conditional mean is the one-dimensional integral
+$\mathbb{E}[x \mid \x_{\mathrm{obs}}] = \int g(\mu + \sigma t)\,
+\varphi(t)\,dt$, evaluated by the quadrature below.
+
+\emph{(iii)}  With both imputations deterministic, each game value is one
+classifier evaluation, and ~\eqref{eq:shapley} is a finite sum over all
+$2^{\np}$ coalitions, feasible for $\np \leq 12$.
+\end{proof}
+
+\paragraph{The Burr quadrature.}
+The integrand $g(\mu + \sigma t)$ has a square-root cusp where its argument
+crosses the copula median $u = \nicefrac{1}{2}$, i.e.\ at $t_0 = -\mu/\sigma$.
+This caps any global quadrature rule at an algebraic convergence rate.  We
+therefore split the integral at $t_0$ and substitute $t = t_0 \pm y^2$ on
+each side.  This removes the cusp and restores the spectral accuracy of
+Gauss--Legendre quadrature.  The domain is truncated at $|t| = 13$, where the
+excluded normal mass is negligible, and each side uses $64$ nodes ($128$
+integrand evaluations per hidden coordinate).  The computed imputations are stable
+under node doubling and agree with large-sample Monte-Carlo conditional
+means.  The released construction additionally passes a unit-test battery
+(unconditional covariance recovery, closed-form conditional moments,
+the Shapley efficiency identity, the dummy-player axiom under independence,
+Monte-Carlo agreement, and the Burr copula round-trip).
+
+\paragraph{From exact imputations to grading targets.}
+The value semantics of the benchmark is $f$-of-mean: a method's
+$\val(\coal)$ evaluates the classifier at the \emph{average} of its
+completions (Appendix~\ref{app:coalition_protocol}).  As the number of draws
+grows, that average converges to the exact conditional (or marginal) mean.
+The deterministic games of Proposition~\ref{prop:oracle} are therefore the
+infinite-draw limits of the games the methods actually play.  The grading
+targets simply plug the limit in directly, pushing the exact imputations through
+the trained classifier, so the targets carry no Monte-Carlo noise of their
+own.  For $\np \leq 12$ the targets are exact Shapley vectors.  Above that
+threshold, the same deterministic value functions are evaluated on the
+shared high-budget designs and solved by ~\eqref{eq:wls}, with the
+resulting grading error measured in Appendix~\ref{app:noise_floors}.
+
+The KS-Oracle \emph{method} row is distinct from the target: it samples
+$R{=}5$ completions from the exact conditional law under the same budget as
+every other stochastic imputer.  Its residual against the deterministic target
+is therefore finite-draw completion noise plus estimation, and the main
+tables use it as a reference.  The reference is not a floor.  The targets
+are the infinite-draw means, so a conditional model whose mean is close to
+the true one and whose draws are less dispersed carries less completion
+noise than exact conditional draws, and can score below the reference
+row.
+
+\section{EC1 Tables and the Cross-Graded Convention}
+\label{app:ec1_table}
+\label{app:cond_tables}
+
+\paragraph{Division of labor between the metrics.}
+$\ECthree$ is a per-sequence correlation, hence scale-free and comparable
+across datasets and player sets.  The main text reports it exclusively.
+$\ECone$ measures the absolute size error of the credits and inherits each
+dataset's and game's attribution scale, so it is comparable within a column
+but not across columns.  Tables~\ref{tab:app-ec1-temporal},
+\ref{tab:app-ec1-spatial}, and~\ref{tab:app-ec1-cells} are the $\ECone$
+companions to main-text Tables~\ref{tab:synth-temporal}--\ref{tab:synth-cells},
+under the same game-matched grading and the same classifier accuracy
+criterion.
+
+\input{tables/tab_app_ec1_temporal}
+\input{tables/tab_app_ec1_spatial}
+\input{tables/tab_app_ec1_cells}
+
+Two rows need a reading note.  Because every synthetic family is centered,
+the exact marginal imputation \emph{is} the zero imputation
+(Proposition~\ref{prop:oracle}).  On exact-enumeration tracks, KS-Zero's
+value function therefore coincides with the standard target's, and its
+$\ECone$ is zero to numerical precision.  KS-Mean's empirical-mean imputation
+nearly coincides with it.  These rows restate the grading target rather
+than estimate it, which is why the main tables leave them out of the
+synthetic ranking.
+
+On sampled tracks the same rows are no longer exactly zero (e.g.\ up to
+$0.012$ at cells, Table~\ref{tab:app-ec1-cells}).  The residual is the pure
+design gap between the method budget and the high-budget target, a useful
+lower bound on what any method can show there.  Conversely, the KS-Oracle
+row's nonzero $\ECone$ ($0.076$--$0.087$ on the non-periodic temporal
+columns) is its own $R{=}5$ completion noise against the deterministic
+target.  The $\ECone$ ordering otherwise mirrors the $\ECthree$ story.
+
+\paragraph{Periodic data and ground-truth credit variation.}
+\label{app:periodic_diag}
+We can measure the periodic near-null of Result~1 on the ground truth
+itself.  The per-sequence spread of the conditional ground-truth credits
+drops to $0.05$--$0.06$ on the two periodic datasets, a third of its level
+on the other three ($0.12$--$0.15$), while the marginal ground truth keeps
+its full spread ($0.14$--$0.23$).  With this little true signal to recover,
+the residual error of any imperfect imputer dominates $\ECthree$: the exact
+conditional imputer still reaches $0.22$, while every imperfect conditional
+imputer sits at $0.61$ or above.  Under spatial players the KS-Oracle
+reference itself drops from $0.22$ to $0.08$ on \texttt{skel+gait}: hiding
+a joint across all frames restores the credit variation that temporal
+windows suppress.
+
+\paragraph{KS-Empirical never improves on KS-Marginal.}
+\label{app:empirical}
+Across all $15$ dataset $\times$ player-set combinations, KS-Empirical
+ranks behind the simpler KS-Marginal, in the main-text $\ECthree$ tables
+and in the $\ECone$ tables above.  KS-Empirical approximates a conditional
+imputation by copying values from the most similar other sequences in the
+evaluation pool, weighted by a kernel (\S\ref{sec:bg-imputation}).  The
+copied values still come from other sequences, so they carry the same
+off-manifold error as marginal sampling, and the similarity weighting adds
+estimation variance on top.
+
+\paragraph{What cross-grading isolates.}
+Under \emph{game-matched} grading, each method is scored against the ground
+truth of its own imputer family, so its error is estimation error within its
+own game.  Under the \emph{cross-graded} convention of prior oracle
+benchmarks, every method is scored against the on-manifold ground truth
+$\gtman$.  A standard imputer's cross-graded error is then its
+estimation error \emph{plus} the divergence $\Delta(\gtstd, \gtman)$ between
+the two ground truths.  The two conventions bracket the divergence: for a
+method whose game-matched error is near zero (KS-Zero, above), the
+cross-graded number is essentially the divergence itself.
+Tables~\ref{tab:app-cross-temporal}--\ref{tab:app-cross-cells} report the
+cross-graded $\ECthree$ at the three player sets.  The generative-imputer rows
+are unchanged from the main tables, since their grading target is already
+$\gtman$.
+
+\input{tables/tab_app_cross_temporal}
+\input{tables/tab_app_cross_spatial}
+\input{tables/tab_app_cross_cells}
+
+At temporal players, KS-VAEAC is the best cross-graded method on all three
+non-periodic datasets ($0.12$/$0.16$/$0.10$).  KS-Zero's definitionally-exact
+standard answers rank second ($0.25$/$0.28$/$0.23$): within $0.04$--$0.08$
+of the exact conditional imputer itself ($0.21$/$0.20$/$0.19$) and ahead of
+every remaining conditional estimator.  A perfect answer to the
+\emph{standard} question outranks every genuine estimate of the
+\emph{conditional} one but KS-VAEAC's.  That is the quantitative content of
+main-text Result~4: cross-graded error is dominated by ground-truth
+divergence, not estimation quality.
+
+\paragraph{The divergence grows with granularity.}
+At the finest player set the same comparison blows up
+(Table~\ref{tab:app-cross-cells}).  On \texttt{skel+gait} cells
+($\np{=}68$), the standard imputers score $0.66$--$0.72$ cross-graded.  That
+compares with game-matched errors of $0.14$--$0.23$ for the estimating
+standard methods (Table~\ref{tab:synth-cells}b) and near-zero $\ECone$ for
+the definitional ones (Table~\ref{tab:app-ec1-cells}).  On \texttt{gait}
+cells the pattern repeats ($0.55$--$0.59$ cross-graded vs.\ $0.16$--$0.26$
+game-matched).  At fine granularity the two ground truths rank cells very
+differently, so the choice of game is most consequential exactly where
+explanations are most detailed.
+
+\paragraph{Per-classifier breakdown.}
+Table~\ref{tab:app-perclf} disaggregates the temporal game-matched
+$\ECthree$ by classifier architecture.  The $\pm$ spread in every aggregated
+table is the spread across these rows.  Errors are generally lowest under
+the MLP and highest under the Transformer (e.g.\ KS-Gauss
+$0.20$/$0.23$/$0.29$ across MLP/CNN/Transformer on \texttt{gauss}).  The
+MLP's input features are exactly the $K$ window means, which aligns the
+classifier's own geometry with the temporal players.  The periodic near-null
+affects every admitted architecture individually (KS-VAEAC $0.84$ and
+$0.69$ on \texttt{gait} MLP/Transformer), so the gray cells of the main
+tables are not an artifact of averaging.  The two $\dagger$ rows are the
+excluded CNNs (Appendix~\ref{app:clf_gate}), shown for completeness.
+Per-classifier values for the spatial and cell tracks ship with the
+canonical result files.
+
+\input{tables/tab_app_perclf_temporal}
+
+\section{Grading Error Floors}
+\label{app:noise_floors}
+
+Above $\np{=}12$ the grading targets are themselves solved on sampled
+designs (Appendix~\ref{app:coalition_protocol}), so the grading itself
+carries an approximation error whose size must be measured, not assumed.  We measure it directly.  For each
+sampled target we recompute an \emph{independent replicate} target at the
+same budget from a disjoint coalition seed.  We then report the error metric
+between the replicate and the stored target, averaged over the classifier
+architectures.
+
+The floor is the resolution limit of the benchmark at that cell.  A
+difference between two methods (or between a method and the target) smaller
+than the floor is not readable, and we flag such comparisons rather than
+interpret them.  Exact-enumeration cells ($\np \leq 12$) have zero grading
+error by construction, so every temporal-player number in the paper is
+graded exactly.
+
+\input{tables/tab_app_floors}
+
+Table~\ref{tab:app-floors} reports the floors.  Two regularities matter for
+reading the synthetic tables.  First, the floors grow with the number of
+players and are largest for the conditional game at the finest cells.  This
+is why the $\np{=}68$ targets are computed at the raised budget
+$B{=}32{,}768$ rather than $B{=}8192$ (main-text Result~3).  Second, the
+floors are the reading rule for the finest-granularity tables: a gap between
+two rows that does not clear the floor of its track is a tie. More specifically, differences below the floor cannot be distinguished from the target's own sampling variability.
+
+The cross-budget agreement row provides an independent check that the two target budgets at
+$\np{=}68$ identify the same game.  Method error and evaluation error are thereby kept separate throughout.
+
+\section{Training and Experiment Details}
+\label{app:experiment_details}
+
+\paragraph{Synthetic data generation.}
+Each dataset is a deterministic function of a fixed seed and the parametric
+family of \S\ref{sec:datasets-synth}.  Every dataset materialises $N{=}200$
+evaluation sequences.  Classifier training draws $2000$ training and $500$
+validation sequences from the same distribution under disjoint seeds, so
+train and test never overlap.  All five pillar datasets share one label
+rule, the \emph{proxy} rule of \S\ref{sec:datasets-synth}: class labels are
+tertiles of the grand mean of the first spatial component, applied on each
+dataset's own draw.  The rule is easy to state, uses no window structure,
+and is deliberately hard for classifiers to shortcut, which produces the
+wide competence range visible in Appendix~\ref{app:clf_gate}.
+
+\paragraph{Synthetic classifiers.}
+For each dataset we train three architectures.  The \emph{MLP} is a 2-layer
+network (hidden width $64$, ReLU, BatchNorm on the input layer) consuming
+the $K$ window-mean features.  The \emph{CNN} is a 3-layer 1-D convolutional
+network (filters $32{\to}32{\to}64$, kernel size $5$, padding $2$, ReLU,
+BatchNorm, global average pooling) on raw frames reshaped to
+$(J\!\cdot\!F, T)$.  The \emph{Transformer} is encoder-only
+($d_{\mathrm{model}}{=}32$, $4$ heads, $2$ layers, feed-forward $128$,
+dropout $0.1$, sinusoidal positional encoding, mean-pool readout) on raw
+frames reshaped to $(T, J\!\cdot\!F)$.
+
+Training uses Adam with cross-entropy loss for $200$ epochs with early
+stopping (patience $20$, best-validation checkpoint kept).  Batch size is
+$64$ ($32$ for the Transformer).  Learning rates are $5{\times}10^{-3}$
+(MLP), $10^{-3}$ (CNN), and $5{\times}10^{-4}$ (Transformer), and weight
+decays $10^{-3}$ (MLP) and $10^{-4}$ (CNN, Transformer).  Runs whose best
+validation accuracy falls below $0.50$ are retried with the learning rate
+divided by five and the next seed.  Whether a trained classifier's
+explanations enter the aggregated tables is decided by the uniform
+accuracy criterion of Appendix~\ref{app:clf_gate}.
+
+\paragraph{CARE-PD classifiers.}
+We explain the UPDRS-gait severity classifiers released with the CARE-PD
+benchmark \citep{adeli2025multi}, one checkpoint per leave-one-subject-out
+fold of the BMCLab split.  The classifiers are MotionBERT
+\citep{zhu2023motionbert} (DSTformer backbone, $T{=}80$, 3-D H36M
+coordinates with crop-scale normalization), MotionAGFormer
+\citep{mehraban2024motionagformer} (attention--graph hybrid, clips
+zero-padded $80 \to 81$ frames), and POTR \citep{martinez2021pose} (GCN
+encoder with a 4-layer Transformer, $d_{\mathrm{model}}{=}128$, root-centered
+z-scored coordinates).  The last is excluded by the accuracy criterion
+(Appendix~\ref{app:clf_gate}).  Coalition imputations are applied in raw world
+coordinates before each backbone's own input normalization.  The explained
+output on all real datasets is the model's probability of its own predicted
+class on the full sequence: $\val(\coal)$ is the softmax probability of that
+class after imputation.
+
+\paragraph{PTB-XL classifier.}
+One 1-D residual network \citep{wang2017time,strodthoff2021ecg} is trained
+from scratch per fold: three residual stages of filter widths
+$64{\to}128{\to}128$ with kernel sizes $\{8,5,3\}$, batch normalization,
+global average pooling, and a linear head.  The input is $(12, 1000)$ from
+$10$\,s recordings at $100$\,Hz.  The class set is \{Normal, Myocardial
+Infarction\}.  Training uses Adam (learning rate $10^{-3}$, weight decay
+$10^{-4}$), $30$ epochs, batch size $64$, and gradient clipping at norm
+$1$.  The learning-rate schedule is \texttt{ReduceLROnPlateau} (factor
+$0.5$, patience $5$, floor $10^{-6}$).  Training also uses a weighted
+random sampler for class imbalance.  Folds use the public
+\texttt{strat\_fold} column ($1$--$10$).  Fold~$2$ matches the canonical
+benchmark split of \citet{strodthoff2021ecg}, and folds~$1$ and~$3$ rotate
+the held-out partition:
+\begin{center}\small
+\begin{tabular}{lccc}
+\toprule
+Fold index & Train (\texttt{strat\_fold}) & Val & Test \\
+\midrule
+$1$ & $\{1, \ldots, 7\}$    & $\{9\}$ & $\{8\}$  \\
+$2$ & $\{1, \ldots, 8\}$    & $\{9\}$ & $\{10\}$ \\
+$3$ & $\{1, \ldots, 7, 9\}$ & $\{8\}$ & $\{10\}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{ESC-50 classifiers.}
+One Audio Spectrogram Transformer \citep{gong2021ast} is fine-tuned per
+fold from the AudioSet-pretrained base
+\texttt{MIT/ast-finetuned-audioset-10-10-0.4593} with a fresh 50-class head. The fold-$f$ model is trained only on fold $f$'s ESC-50 training split ($1600$ clips) and evaluated on the held-out fold ($400$ clips). The best epoch is chosen on the held-out fold. This choice is inconsequential: all runs plateau before the final epoch, and across the
+three folds the selected epoch improves held-out accuracy by at most $0.005$ over simply taking the final epoch.
+
+Training uses AdamW (learning rate
+$3{\times}10^{-5}$, weight decay $0.01$), $5$ epochs, batch size $16$, a
+$5\%$ linear warmup followed by a cosine schedule to zero, gradient clipping
+at norm $1$, and seed $42{+}\mathrm{fold}$.  Inputs are log-mel features in
+the AST convention ($128$ mel bins $\times$ $1024$ frames), identical to the
+attribution-time forward path.  Per-fold held-out accuracies are in
+Table~\ref{tab:app-clf-gate}.
+
+\section{The Classifier Accuracy Criterion}
+\label{app:clf_gate}
+
+A benchmark of explanations is only as meaningful as the classifiers being
+explained.  Every explained classifier must therefore pass one uniform gate
+before its results enter any aggregated table: \textbf{(G1)} held-out
+accuracy at least $0.05$ above chance, and \textbf{(G2)} a train--test
+accuracy gap of at most $0.30$.  G1 removes classifiers that never learned
+the task.  G2 removes classifiers whose training-set fit does not transfer,
+for which any explanation would describe memorisation rather than the
+data-generating structure.  Table~\ref{tab:app-clf-gate} reports the full
+accuracy accounting for all fifteen synthetic classifiers and the three
+real-data classifier families.
+
+\input{tables/tab_app_clf_gate}
+
+One rule yields every exclusion in the paper.  POTR on CARE-PD fails G1
+(pooled held-out accuracy $0.374$ against the three-class bar of $0.383$).
+The CNNs on the two periodic synthetic datasets fail G2 (\texttt{gait}
+$+0.575$, \texttt{skel+gait} $+0.500$).  Their near-perfect training
+accuracy collapses to near-chance held out, the signature of memorising
+periodic templates.  Every other classifier passes, including both CARE-PD
+backbones (gaps $+0.276$ and $+0.258$), the PTB-XL ResNets ($+0.016$), and
+the per-fold ESC-50 ASTs ($+0.034$).
+
+The gate is an aggregation rule for the synthetic suite, not a
+data-deletion rule.  The two excluded CNNs' per-cell results are still
+computed and still ship in the canonical result files (and appear grayed in
+Table~\ref{tab:app-perclf}).  They are only barred from the aggregated
+tables and from ranking claims.  POTR fails the accuracy condition, so no
+attributions are computed for it (explaining a classifier that has not
+learned the task grades noise) and only its gate record ships.  Synthetic
+aggregates on \texttt{gait} and \texttt{skel+gait} therefore average the
+MLP and Transformer.  All other synthetic aggregates average three
+architectures.  CARE-PD results are reported for the two passing backbones
+as models A and B.
+
+\section{Real-Data Protocol and Additional Tables}
+\label{app:real_data_table}
+\label{app:real_cells}
+
+Table~\ref{tab:app-real-protocol} collects the full real-data protocol.
+Each dataset contributes three tracks (temporal windows, spatial units, and
+their intersection cells) under the shared estimation layer of
+Appendix~\ref{app:coalition_protocol}: exact enumeration wherever
+$\np \leq 12$, and shared sampled designs at $B{=}2048$ above.  Each track
+evaluates $N{=}200$ sequences per fold ($200/180/200$ on CARE-PD's
+subject-wise folds), three folds pooled, with the $\pm$ spread across
+folds.  All classifiers are per-fold models that pass the gate of
+Appendix~\ref{app:clf_gate}.  POTR is excluded there and appears in no
+result table.
+
+\begin{table}[t]
+\centering
+\caption{\textbf{Real-data protocol.}  Tasks, classifiers, and the three
+player-set tracks per dataset.  All tracks: $3$ folds, $200$ sequences per
+fold ($200/180/200$ on CARE-PD), folds pooled.  Sampled designs share the
+coalition protocol of Appendix~\ref{app:coalition_protocol} (seed $7919$).
+CARE-PD folds are leave-one-subject-out.  ESC-50 uses folds $1$--$3$ of its
+$5$ stratified folds.}
+\label{tab:app-real-protocol}
+\small
+\setlength{\tabcolsep}{4pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lllllc}
+\toprule
+Dataset & Task & Classifiers (one per fold) & Track & $\np$ & Coalitions \\
+\midrule
+CARE-PD & UPDRS-gait severity (3-class) & MotionBERT (A), MotionAGFormer (B); & windows ($K{=}4$) & $4$ & exact ($2^{4}$) \\
+ & $17$ H36M joints, $T{=}80$ & POTR excluded (Appendix~\ref{app:clf_gate}) & joints & $17$ & sampled, $B{=}2048$ \\
+ & & & joint$\times$window cells & $68$ & sampled, $B{=}2048$ \\
+\addlinespace
+PTB-XL & Normal vs.\ MI (binary) & ResNet1d & windows ($K{=}4$) & $4$ & exact ($2^{4}$) \\
+ & $12$ leads, $T{=}1000$ ($100$\,Hz) & & leads & $12$ & exact ($2^{12}$) \\
+ & & & lead$\times$window cells & $48$ & sampled, $B{=}2048$ \\
+\addlinespace
+ESC-50 & environmental audio (50-class) & AST fine-tune & windows ($K{=}4$) & $4$ & exact ($2^{4}$) \\
+ & $128$ mel bins, $T{=}1024$ & & freq.\ bands (mel quartiles) & $4$ & exact ($2^{4}$) \\
+ & & & band$\times$window cells & $16$ & sampled, $B{=}2048$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\paragraph{Best methods per dataset and player set.}
+\label{app:real_best}
+On CARE-PD, standard imputers score highest at every granularity and under
+both metrics (windows, joints, and cells; Table~\ref{tab:real-faith}a and
+Table~\ref{tab:app-real-cells}).  On ESC-50, KS-Marginal scores highest on
+both metrics at windows ($0.92$ faithfulness, $0.88$ PlayerAOPC), but on
+the frequency-band and band$\times$window players the two metrics
+separate: KS-VAEAC is best on faithfulness ($0.87$, $0.88$) and KS-Marginal
+on PlayerAOPC ($0.79$, $0.85$).  On PTB-XL no method is best everywhere.
+KS-Marginal has the highest faithfulness at windows.  Per lead, KS-Zero and
+KS-Mean have the highest faithfulness ($0.66$) with KS-Flow close behind
+($0.64$), and KS-Flow has the clearly highest PlayerAOPC ($0.58$ vs.\
+$0.47$).
+
+\paragraph{Spatiotemporal cells on real data.}
+Table~\ref{tab:app-real-cells} extends the main-text real-data tables to the
+finest player set: joint$\times$window cells on CARE-PD ($\np{=}68$),
+lead$\times$window cells on PTB-XL ($\np{=}48$), and band$\times$window
+cells on ESC-50 ($\np{=}16$).
+
+\input{tables/tab_app_real_cells}
+
+The main-text findings persist at this granularity.  CARE-PD keeps its
+highest-scoring standard imputers under both metrics (Result~5), and its two
+backbones continue to disagree on which standard imputer scores highest.  The metric
+disagreement of Result~5 is at its starkest on model A, where KS-Zero has
+the best faithfulness ($0.89$) and a negative PlayerAOPC.  ESC-50
+reproduces the split of Result~5 at cells: KS-VAEAC leads faithfulness
+($0.88$) while KS-Marginal leads PlayerAOPC ($0.85$).  PTB-XL remains the
+contested case and reproduces the metric split at cells: KS-VAEAC leads
+faithfulness ($0.78$) while KS-Zero and KS-Mean lead PlayerAOPC ($0.39$),
+with KS-Marginal behind on both.
+
+Reading across Table~\ref{tab:real-faith},
+and~\ref{tab:app-real-cells}, no method family wins PTB-XL under both
+metrics at any granularity.  This is the strongest real-data illustration
+that a no-oracle metric is itself a declared choice (Result~5).  As
+everywhere, AOPC magnitudes shrink with player granularity and are only
+comparable within one player set (\S\ref{sec:bg-metrics}).
+
+\section{Imputer Details and Capability Checks}
+\label{app:imputer_detail}
+
+\paragraph{KS-Gauss (closed-form Gaussian conditional).}
+Following the parametric approach of \citet{aas2021explaining}, KS-Gauss
+fits one joint Gaussian to the training pool with Ledoit--Wolf-shrunk
+covariance.  For each coalition, it fills the hidden coordinates from the
+closed-form conditional distribution given the visible ones ($R{=}5$ draws,
+averaged).  It has no learned components.  Its only assumption is Gaussian
+dependence, which is exactly satisfied on the Gaussian-marginal synthetic
+families and deliberately violated on \texttt{burr}.
+
+\paragraph{KS-VAEAC.}
+Following the arbitrary-conditioning framework of
+\citet{ivanov2018variational,olsen2022using}, the VAEAC imputer is a
+per-frame-token transformer with three subnetworks (full encoder, prior
+encoder, decoder).  Each is a 2-layer transformer trunk with
+$d_{\mathrm{model}}{=}256$, $8$ heads, feed-forward $512$, dropout $0.1$,
+and sinusoidal frame positional encoding.  Each frame is one token (full
+encoder sees $[\x, \mathbf{m}]$, prior encoder $[\x \odot \mathbf{m},
+\mathbf{m}]$, decoder $[\mathbf{z}, \x \odot \mathbf{m}, \mathbf{m}]$ for
+mask $\mathbf{m}$).  The per-frame latent dimension is $64$, and a Gaussian
+output head carries a single learnable global $\log\sigma$.
+
+The loss is negative log-likelihood on hidden entries plus
+$\mathrm{KL}(q\,\|\,p)$, optimized with Adam (learning rate $10^{-3}$,
+gradient clip $1.0$, batch $16$) under randomly mixed masks
+(temporal-window, spatial-unit, and element-wise).  Training runs for $80$
+epochs on the synthetic families (the motion-capture imputers train through
+the external CARE-PD repository's configurations).  Every released
+checkpoint records its full training configuration.  At inference the
+latent is drawn from the prior encoder, decoded, and the observed entries
+are restored exactly.  In the notation of \S\ref{sec:bg-imputation}, the
+imputer draws a latent $z$ from the amortized conditional prior $p_\psi$
+and decodes it with $g_\theta$:
+\begin{equation}
+  \tilde{\x}_{\bar{\coal}}^{\textsc{vaeac}} = g_\theta(z, \x_{\coal}),
+  \qquad z \sim p_\psi(z \mid \x_{\coal}).
+  \label{eq:generative}
+\end{equation}
+
+\paragraph{KS-Flow.}
+KS-Flow is a conditional optimal-transport flow-matching imputer
+\citep{lipman2023flow,tong2024improving}.  The velocity network is an
+encoder-only transformer ($d{=}256$, $4$ heads, $4$ layers, GELU) with
+frame-level tokenisation.  It is trained to minimize
+$\mathbb{E}\,\lVert v_\theta(\x_t, t) - (\x_1 - \x_0)\rVert^2$ along the
+interpolant $\x_t = (1{-}t)\x_0 + t\x_1$ with
+$\x_0 \sim \mathcal{N}(\bm{0}, I)$.  At inference, $20$ midpoint-Euler ODE
+steps are interleaved with RePaint harmonisation
+\citep{lugmayr2022repaint}: at each step the observed coordinates are
+snapped to their interpolant values, so the trajectory conditions on the
+visible data.  In the notation of \S\ref{sec:bg-imputation}, the imputer
+transports noise to the manifold along the learned velocity field
+$v_\eta$:
+\begin{equation}
+  \tilde{\x}_{\bar{\coal}}^{\textsc{flow}} = \x_{\bar{\coal}}^{(1)},
+  \qquad \tfrac{d\x_{\bar{\coal}}^{(t)}}{dt} =
+  v_\eta\bigl(\x_{\bar{\coal}}^{(t)}, t,  \x_{\coal}\bigr),
+  \qquad \x_{\bar{\coal}}^{(0)} \sim \mathcal{N}(0, I).
+\end{equation}
+
+\paragraph{Real-data checkpoints.}
+One VAEAC and one flow imputer are trained per real dataset on that
+dataset's training pool and reused across all of its tracks and folds.  The
+PTB-XL pair uses a smaller configuration recorded in its released
+checkpoints: $d_{\mathrm{model}}{=}128$, $4$ heads, $4$ layers, feed-forward
+$256$, VAEAC latent $32$, and flow with $20$ ODE steps.  Every released
+checkpoint stores its full architecture dictionary, and the loaders
+instantiate from it.
+
+\paragraph{The capability check.}
+A generative imputer is a \emph{model} of the conditional distribution, and how
+good a model it is depends on what is being hidden.  We therefore
+characterize every learned imputer with a hide-one-reconstruct check, run
+per player-set mask family.  The check hides one player (a spatial unit, a
+temporal window, or a cell), imputes its conditional mean from the visible
+rest ($8$ draws averaged), and correlates the imputation with the hidden
+ground truth.  Scores are computed over $3$ folds and $24$ sequences per
+fold.
+
+Two controls calibrate the score.  The \emph{donor} control copies the
+hidden entries from the most-correlated other unit of the same sequence:
+the recovery available from raw redundancy alone, with no model.  The
+\emph{unconditional} control runs the same imputer with everything hidden:
+the recovery available from dataset stereotypy alone, with no conditioning.
+An imputer demonstrably conditions on the visible context exactly when its
+recovery clears both controls.  Table~\ref{tab:app-imputer-gate} reports
+the full matrix.
+
+\input{tables/tab_app_imputer_gate}
+
+\paragraph{PTB-XL: conditioning proven cross-lead, absent cross-window.}
+The twelve leads observe one cardiac source, and the imputers exploit it.
+A hidden lead is recovered at $0.95$--$0.96$ correlation, against a donor
+control of $-0.01$ and an unconditional control of $0.00$.  That is genuine
+cross-lead conditioning, not redundancy or stereotypy.  Cell masks behave
+the same way ($0.98$--$0.99$), since a hidden lead--window cell is
+constrained by both its lead's other windows and the other leads.
+
+A hidden \emph{whole window}, by contrast, removes that time span from
+every lead at once, leaving nothing contemporaneous to condition on.
+Recovery drops to $0.05$--$0.10$: ECG imputation interpolates across leads,
+not across time.  The same imputer is thus a trustworthy conditional model
+under spatial and cell players and not under temporal players.  The
+near-perfect lead recovery also explains the flat per-lead attributions of
+\S\ref{sec:results-real}: deleting a lead removes almost no information, so
+low per-lead credit is the correct conditional answer.
+
+\paragraph{CARE-PD: at the redundancy ceiling.}
+Gait is so stereotyped and cross-joint-redundant that every number in the
+CARE-PD block saturates.  The imputers recover hidden players at
+$0.96$--$1.00$, but the donor control already reaches $0.97$--$0.98$ and
+the unconditional control $0.99$.  Recovery itself is excellent (the
+imputations are realistic), but the check cannot separate conditioning from dataset
+stereotypy where stereotypy alone suffices.  On such data the two are
+observationally equivalent, and the controls say so explicitly.
+
+\paragraph{ESC-50: conditioning proven cross-band, partial elsewhere.}
+On spatial (frequency-band) masks the imputers clear both controls
+($0.87$--$0.88$ against donor $0.62$ and unconditional $0.75$): hidden bands
+are genuinely reconstructed from the visible spectrum.  On temporal and cell
+masks, recovery ($0.29$--$0.37$) clears the donor control ($0.16$/$0.12$)
+but not the unconditional one: what is recovered there reflects
+dataset-level spectrogram structure more than clip-specific content.
+
+Read as a whole, the check is a capability map, not a verdict.  Before any
+attribution is computed, it tells a practitioner which mask families (and
+hence which player sets) a given generative imputer is a trustworthy
+conditional model for.  It also supplies the controls needed to say so on a
+new dataset.  This is the measurement behind the decision guide's
+``generative imputer \emph{with} a capability check'' branch
+(Appendix~\ref{app:guide}).
+
+\paragraph{Practical interpretation.}
+If the data distribution is analytically known, the exact conditional
+imputer, or its closed-form Gaussian approximation, is the natural choice:
+KS-Gauss stays competitive even when its Gaussian assumption is violated
+(Result~2).  Where the check finds near-perfect reconstruction, as for the
+hidden ECG lead above, hiding a player removes almost no information, so
+near-uniform credit across players is the correct explanation rather than
+a failure.  Where no conditional model passes the check, standard imputers
+are the sound choice, interpreted as answers to the marginal game: an
+exact answer to the marginal question is more useful than an inaccurate
+answer to the conditional one (Result~4).
+
+\section{Reproducibility}
+\label{app:repro}
+
+The release contains the complete pipeline: the synthetic data generators,
+classifier and imputer trainers, and the attribution and grading pipelines
+(coalition designs, imputers, WLS solver, exact and high-budget targets,
+capability check).  It also contains every configuration file behind every
+reported cell.  The canonical per-cell result files ship with the code,
+with a table-by-table map from each paper table to its file and rerun entry
+point, so every reported number is verifiable in minutes, without a GPU.
+
+Reference checkpoints are hosted with a SHA-256 manifest, verified on
+download, and split by the source datasets' licenses.  Weights whose source
+license forbids redistributing derivatives retrain from the documented
+recipes.  Each retraining path was validated by regenerating the shipped
+reference tracks bit-exactly.  The packaged estimator, oracle imputations, and
+player partitions are pinned by the released test suite, and the oracle
+construction carries the unit-test battery of
+Appendix~\ref{app:oracle_proofs}.  Per-cell results for the gate-excluded
+synthetic CNNs are included (Appendix~\ref{app:clf_gate}), so the criterion is
+reproducible and revisable.  The random streams behind every reported
+number are pinned in the configurations and entry points: data generation,
+training, sampled coalition designs (seed $7919$), imputer draws, and
+evaluation subsets.
+
+The CARE-PD backbones and imputers fine-tune through the external CARE-PD
+repository.  The WindowSHAP baselines wrap a third-party package.  Display
+names map to configuration names (\texttt{gauss} $\to$
+\texttt{gaussian\_k4}, \texttt{burr} $\to$ \texttt{burr\_m5},
+\texttt{skeleton} $\to$ \texttt{skeleton\_structured},
+\texttt{gait} $\to$ \texttt{gait\_periodic}, \texttt{skel+gait} $\to$
+\texttt{skeleton\_gait\_combined}).  KS-Gauss appears in the canonical
+files as \texttt{ks\_shapr}, and WindowSHAP-S/D as
+\texttt{windowshap\_stationary}/\texttt{windowshap\_dynamic}.
+
+Experiments ran on a shared SLURM-managed GPU cluster.  Every training,
+attribution, and grading job fits on a single GPU, and the benchmark
+imposes no multi-node requirements.
+
+\section{Additional Discussion of Explanation Evaluation}
+\label{app:eval_critique}
+
+Existing evaluation techniques have shortcomings that are general and
+others specific to spatiotemporal data. First, general evaluation practice
+can certify explanations for the wrong reasons.
+Saliency maps can be insensitive to model and data
+randomization~\citep{adebayo2018sanity}. Deletion-style evaluations
+conflate attribution quality with the distribution shift they
+induce~\citep{hooker2019roar}, and faithfulness metrics inherit related
+instabilities~\citep{bhatt2020evaluating,hedstrom2023quantus}. Our
+metric-disagreement finding (Result~5) extends this lineage to imputer-based
+Shapley evaluation on real spatiotemporal data.
+
+\section{Setting up a Shapley Analysis in Practice}
+\label{app:guide}
+
+We summarize MotionBench-XAI's findings into a decision guide
+(Figure~\ref{fig:decision}) organized by the three questions a practitioner
+should ask before computing Shapley attributions on spatiotemporal data.
+Each question selects one of the choices the benchmark measures, and each
+answer is a choice to state alongside the explanation.
+
+\paragraph{What is known about the data's distribution?}
+This question selects the imputer. If the distribution can be learned, a
+generative imputer is appropriate, but it should not be trusted blindly.
+Run the capability check first: hide one player, ask the imputer to
+reconstruct it from the rest, and compare the reconstruction against simply
+copying the most similar visible unit. The comparison against copying
+matters, because redundant data makes any imputer look capable.
+Appendix~\ref{app:imputer_detail} gives the full check and its
+interpretation.
+
+\paragraph{What is the goal of the explanation?}
+This question selects the players, and the players should match the
+question, not the attribution method. To ask which phase of a movement
+matters, use temporal windows. To ask which anatomical unit matters, use
+spatial players. To localize in both space and time, use
+joint$\times$window cells, and budget for them: cells need more classifier
+evaluations, and the grading error floor of Result~3 should be measured and
+reported next to the results. Two warnings transfer directly from the
+synthetic suite. On periodic data, temporal windows can make the
+conditional game unanswerable (Result~1). And existing temporal SHAP
+methods hard-code time windows as their players, so changing the question
+means changing the method (\S\ref{sec:bg-imputation}).
+
+\paragraph{How will the explanation be scored?}
+With a ground truth, grade each method against the ground truth of its own
+game, and state which game that is (Result~4). Without one, report
+faithfulness \emph{and} PlayerAOPC together, and expect them to disagree
+(Result~5). The best method under one metric is a statement about how that
+metric is built, not about explanation quality in general. And AOPC values
+should never be compared across player granularities
+(\S\ref{sec:bg-metrics}).
+
+% \begin{figure}[t]
+% \centering
+% \setlength{\fboxsep}{3pt}%
+% \fbox{\begin{minipage}{0.96\linewidth}\small
+% \setlist[enumerate]{topsep=1pt,itemsep=1pt,parsep=0pt,leftmargin=1.4em}%
+% \textbf{Setting up a Shapley analysis: three questions to answer, and
+% declare.}
+% \begin{enumerate}[leftmargin=1.4em]
+% \item \textbf{What is known about the data's distribution?}
+%   Analytically known $\to$ exact conditional or closed-form
+%   Gaussian imputer.  Learnable $\to$ generative imputer \emph{with} a
+%   hide-one-reconstruct capability check.  Neither $\to$ standard imputer,
+%   interpreted as the marginal game.
+% \item \textbf{What is the goal of the explanation?}
+%   Which phase of the movement $\to$ temporal windows.  Which anatomical unit
+%   $\to$ spatial players.  Fine localization $\to$ cells, with the budget and
+%   the grading error floor reported.  Periodic data $+$ temporal windows: the
+%   conditional game may be unmeasurable.
+% \item \textbf{How will the explanation be scored?}
+%   Ground truth available $\to$ EC1/EC3, game-matched, game declared.
+%   None $\to$ faithfulness \emph{and} PlayerAOPC together, with disagreement
+%   expected, and no AOPC comparisons across granularities.
+% \end{enumerate}
+% \end{minipage}}
+% \caption{\textbf{Practitioner decision guide.}  The benchmark's findings as
+% a setup procedure.  Every answer is a choice to declare alongside the
+% explanation.}
+% \label{fig:decision}
+% \end{figure}
+

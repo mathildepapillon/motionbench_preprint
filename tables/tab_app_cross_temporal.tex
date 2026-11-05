@@ -1,0 +1,28 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Cross-graded EC3, temporal players}: every method graded against the on-manifold (conditional) ground truth, the convention of prior oracle benchmarks. Comparing the standard-imputer block with its game-matched values in Table~\ref{tab:synth-temporal} isolates the ground-truth divergence $\Delta(\gtstd,\gtman)$ from estimator error. Gray columns: on periodic data the conditional ground truth is nearly uniform across windows, so no per-column best is marked.}
+\label{tab:app-cross-temporal}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccc}
+\toprule
+Method & \texttt{gauss} & \texttt{skeleton} & \texttt{burr} & \texttt{gait} & \texttt{skel+gait} \\
+\midrule
+\multicolumn{6}{l}{\emph{Standard imputers, graded against the conditional ground truth}} \\
+KS-Zero & 0.25 \msd{0.03} & 0.28 \msd{0.09} & 0.23 \msd{0.04} & \textcolor{gray}{0.87 \msd{0.11}} & \textcolor{gray}{0.87 \msd{0.13}} \\
+KS-Mean & 0.26 \msd{0.02} & 0.29 \msd{0.09} & 0.23 \msd{0.03} & \textcolor{gray}{0.86 \msd{0.10}} & \textcolor{gray}{0.86 \msd{0.12}} \\
+KS-Marginal & 0.45 \msd{0.06} & 0.52 \msd{0.09} & 0.38 \msd{0.03} & \textcolor{gray}{0.86 \msd{0.08}} & \textcolor{gray}{0.84 \msd{0.10}} \\
+WindowSHAP-S & 0.46 \msd{0.04} & 0.65 \msd{0.11} & 0.43 \msd{0.04} & \textcolor{gray}{0.90 \msd{0.03}} & \textcolor{gray}{0.91 \msd{0.03}} \\
+WindowSHAP-D & 0.68 \msd{0.06} & 0.77 \msd{0.15} & 0.61 \msd{0.09} & \textcolor{gray}{0.94 \msd{0.06}} & \textcolor{gray}{0.98 \msd{0.02}} \\
+TimeSHAP & 0.47 \msd{0.06} & 0.48 \msd{0.08} & 0.48 \msd{0.12} & \textcolor{gray}{0.91 \msd{0.05}} & \textcolor{gray}{0.93 \msd{0.03}} \\
+KS-Empirical & 0.53 \msd{0.03} & 0.56 \msd{0.09} & 0.51 \msd{0.05} & \textcolor{gray}{0.84 \msd{0.05}} & \textcolor{gray}{0.87 \msd{0.09}} \\
+\addlinespace
+\multicolumn{6}{l}{\emph{Generative imputers, graded against the conditional ground truth (as in the main tables)}} \\
+KS-VAEAC & \textbf{0.12} \msd{0.03} & \textbf{0.16} \msd{0.05} & \textbf{0.10} \msd{0.02} & \textcolor{gray}{0.76 \msd{0.08}} & \textcolor{gray}{0.87 \msd{0.04}} \\
+KS-Flow & 0.41 \msd{0.07} & 0.38 \msd{0.09} & 0.29 \msd{0.03} & \textcolor{gray}{0.78 \msd{0.10}} & \textcolor{gray}{0.77 \msd{0.12}} \\
+KS-Gauss (closed form) & 0.24 \msd{0.04} & 0.28 \msd{0.08} & 0.23 \msd{0.03} & \textcolor{gray}{0.69 \msd{0.09}} & \textcolor{gray}{0.61 \msd{0.15}} \\
+\midrule
+KS-Oracle (reference) & 0.21 \msd{0.05} & 0.20 \msd{0.06} & 0.19 \msd{0.04} & \textcolor{gray}{0.22 \msd{0.06}} & \textcolor{gray}{0.22 \msd{0.03}} \\
+\bottomrule
+\end{tabular}
+\end{table}

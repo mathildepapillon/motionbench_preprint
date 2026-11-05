@@ -1,0 +1,28 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{EC1, temporal players} (companion to Table~\ref{tab:synth-temporal}): mean absolute attribution error against the exact game-matched ground truth, mean $\pm$ spread across the classifier architectures that pass the accuracy criterion (Appendix~\ref{app:clf_gate}). EC1 carries the attribution scale of each dataset, so values compare within a column, not across columns. Gray as in the main table.}
+\label{tab:app-ec1-temporal}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccc}
+\toprule
+Method & \texttt{gauss} & \texttt{skeleton} & \texttt{burr} & \texttt{gait} & \texttt{skel+gait} \\
+\midrule
+\multicolumn{6}{l}{\emph{Standard imputers, graded against the marginal ground truth $\gtstd$}} \\
+KS-Zero & \textbf{0.000} \msd{0.000} & \textbf{0.000} \msd{0.000} & \textbf{0.000} \msd{0.000} & \textbf{0.000} \msd{0.000} & \textbf{0.000} \msd{0.000} \\
+KS-Mean & 0.016 \msd{0.008} & 0.017 \msd{0.011} & 0.009 \msd{0.004} & 0.026 \msd{0.025} & 0.019 \msd{0.001} \\
+KS-Marginal & 0.115 \msd{0.052} & 0.105 \msd{0.064} & 0.096 \msd{0.044} & 0.085 \msd{0.081} & 0.102 \msd{0.049} \\
+WindowSHAP-S & 0.074 \msd{0.023} & 0.073 \msd{0.037} & 0.073 \msd{0.025} & 0.085 \msd{0.079} & 0.161 \msd{0.010} \\
+WindowSHAP-D & 0.099 \msd{0.034} & 0.082 \msd{0.045} & 0.091 \msd{0.031} & 0.111 \msd{0.104} & 0.190 \msd{0.028} \\
+TimeSHAP & 0.113 \msd{0.055} & 0.093 \msd{0.057} & 0.106 \msd{0.063} & 0.168 \msd{0.164} & 0.219 \msd{0.109} \\
+KS-Empirical & 0.135 \msd{0.052} & 0.116 \msd{0.066} & 0.119 \msd{0.048} & 0.100 \msd{0.095} & 0.124 \msd{0.054} \\
+\addlinespace
+\multicolumn{6}{l}{\emph{Generative imputers, graded against the conditional ground truth $\gtman$}} \\
+KS-VAEAC & 0.060 \msd{0.028} & 0.074 \msd{0.036} & 0.048 \msd{0.021} & \textcolor{gray}{0.102 \msd{0.097}} & \textcolor{gray}{0.157 \msd{0.053}} \\
+KS-Flow & 0.128 \msd{0.059} & 0.104 \msd{0.062} & 0.098 \msd{0.044} & \textcolor{gray}{0.101 \msd{0.096}} & \textcolor{gray}{0.130 \msd{0.061}} \\
+KS-Gauss (closed form) & 0.092 \msd{0.041} & 0.089 \msd{0.051} & 0.085 \msd{0.038} & \textcolor{gray}{0.093 \msd{0.088}} & \textcolor{gray}{0.100 \msd{0.057}} \\
+\midrule
+KS-Oracle (reference) & 0.087 \msd{0.039} & 0.080 \msd{0.045} & 0.076 \msd{0.035} & 0.049 \msd{0.047} & 0.056 \msd{0.028} \\
+\bottomrule
+\end{tabular}
+\end{table}

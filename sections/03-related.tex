@@ -1,0 +1,107 @@
+\section{Related Work}
+\label{sec:related}
+
+\begin{table}[t]
+\centering
+\caption{\textbf{Coverage of MotionBench-XAI's evaluation dimensions.}
+Synthetic ground truth provides known informative features or numerical
+attribution targets. Conditional imputers fill missing inputs using the
+observed inputs and are evaluated within explanation methods.
+Multiple player sets means comparing different groupings of input features.
+$\checkmark$ indicates a reported component and -- an unreported one.}
+\label{tab:related_bench}
+\setlength{\tabcolsep}{3pt}
+\scriptsize
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lcccc@{}}
+\toprule
+Study
+& \shortstack{Synthetic ground truth}
+& \shortstack{Temporal data}
+& \shortstack{Conditional imputers}
+& \shortstack{Multiple player sets} \\
+\midrule
+BAM~\citep{Yang2019BenchmarkingAM}
+ & $\checkmark$ & -- & -- & -- \\
+CLEVR-XAI~\citep{arras2022clevr}
+ & $\checkmark$ & -- & -- & -- \\
+\citet{olsen2024comparative}
+ & $\checkmark$ & -- & $\checkmark$ & -- \\
+XTSC-Bench~\citep{hollig2023xtsc}
+ & $\checkmark$ & $\checkmark$ & -- & -- \\
+xaitimesynth~\citep{baer2026xaitimesynth}
+ & $\checkmark$ & $\checkmark$ & -- & -- \\
+SHAPformer~\citep{hertel2026shapformer}
+ & $\checkmark$ & $\checkmark$ & -- & $\checkmark$ \\
+TimeSHAP~\citep{bento2021timeshap}
+ & -- & $\checkmark$ & -- & $\checkmark$ \\
+ShaTS~\citep{de2025shats}
+ & -- & $\checkmark$ & -- & $\checkmark$ \\
+GroupSegment-SHAP~\citep{kim2026groupsegment}
+ & $\checkmark$ & $\checkmark$ & -- & $\checkmark$ \\
+\midrule
+\textbf{MotionBench-XAI (ours)}
+ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+Prior work addresses dependence-aware Shapley attribution, temporal player
+definitions, and explanation evaluation. MotionBench-XAI studies how these
+choices interact (Table~\ref{tab:related_bench}).
+
+\paragraph{Dependence-aware and temporal Shapley attribution.}
+Marginal-background KernelSHAP~\citep{lundberg2017unified} fills missing
+features with background values without conditioning on observed features.
+With dependent features, this can produce off-manifold
+inputs~\citep{frye2021shapley}. Conditional Shapley methods include
+empirical and copula-based conditioning~\citep{aas2021explaining,aas2021vineexplaining}
+and conditional inference trees~\citep{redelmeier2020explaining}.
+Variational approaches~\citep{olsen2022using} use
+VAEAC~\citep{ivanov2018variational} to sample missing features.
+ManifoldShap restricts interventional evaluations to a specified domain
+of validity~\citep{taufiq2023manifold}. Related work studies transport-based
+paths for Aumann--Shapley attribution~\citep{zhang2026axiomatic}.
+
+For sequences, TimeSHAP provides feature, timestep and cell
+attributions~\citep{bento2021timeshap}, while WindowSHAP groups adjacent
+time points within each variable~\citep{NAYEBI2023104438}.
+\citet{villani2022feature} develop autoregressive surrogates and
+time-consistent attributions. ShaTS studies temporal and feature
+groupings~\citep{de2025shats}, using background substitution.
+GroupSegment-SHAP combines dependence-based variable groups with temporal
+segments~\citep{kim2026groupsegment} and mainly uses mean replacement.
+Grouping alone does not provide conditional completion.
+
+Marginal and conditional Shapley games answer different explanatory
+questions~\citep{janzing2020feature,chen2020true,sundararajan2020many,kumar2020problems}.
+Our synthetic targets use marginal or conditional mean fills
+(\S\ref{sec:bg-gt}). Predicting on these fills generally differs from
+averaging predictions over imputations.
+Amortized estimators~\citep{jethani2022fastshap} and improved
+regression-based estimation~\citep{covert2021improving} address
+computational efficiency.
+
+\paragraph{Explanation evaluation.}
+Fixed-model deletion tests can confound feature importance with the
+distribution shift caused by replacing inputs. ROAR addresses this by
+retraining on modified data~\citep{hooker2019roar}.
+\citet{bhatt2020evaluating} study faithfulness and sensitivity, while
+Quantus provides evaluation metrics and illustrates how their settings
+affect rankings~\citep{hedstrom2023quantus}.
+
+\paragraph{Benchmarks and spatiotemporal applications.}
+Synthetic time-series benchmarks identify informative
+regions~\citep{ismail2020benchmarking,hollig2023xtsc,baer2026xaitimesynth}.
+These masks differ from numerical Shapley values
+(Table~\ref{tab:related_bench}).
+\citet{olsen2022using,olsen2024comparative} evaluate conditional Shapley
+estimates in tabular simulations with known distributions.
+SHAPformer computes numerical Shapley values for a synthetic
+data-generating process~\citep{hertel2026shapformer}, which need not match
+a fitted model's attributions.
+
+Applications to human action and motion use DeepExplainer with background
+samples~\citep{auletta2023predicting,tempel2025choose}.
+ShapGCN assesses explanations by perturbing learned edge
+weights~\citep{tempel2025explaining}, while ECG analysis uses layer-wise
+relevance propagation~\citep{strodthoff2021ecg}.

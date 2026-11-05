@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Real-world results, spatiotemporal players} (joint$\times$window / lead$\times$window / band$\times$window cells). Faithfulness ($\uparrow$) and PlayerAOPC ($\uparrow$), pooled over the three data folds, $\pm$ spread across folds; bold: best per column and metric. Protocol identical to Table~\ref{tab:real-faith} (coalition budget 2048, $N{=}200$ per fold).}
+\label{tab:app-real-cells}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccccccc}
+\toprule
+ & \multicolumn{4}{c}{\emph{Faithfulness}} & \multicolumn{4}{c}{\emph{PlayerAOPC}} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+Method & \shortstack{CARE-PD A\\{\scriptsize $\np{=}68$}} & \shortstack{CARE-PD B\\{\scriptsize $\np{=}68$}} & \shortstack{PTB-XL\\{\scriptsize $\np{=}48$}} & \shortstack{ESC-50\\{\scriptsize $\np{=}16$}} & \shortstack{CARE-PD A\\{\scriptsize $\np{=}68$}} & \shortstack{CARE-PD B\\{\scriptsize $\np{=}68$}} & \shortstack{PTB-XL\\{\scriptsize $\np{=}48$}} & \shortstack{ESC-50\\{\scriptsize $\np{=}16$}} \\
+\midrule
+KS-Zero & \textbf{0.89} \msd{0.03} & 0.66 \msd{0.23} & 0.74 \msd{0.03} & 0.77 \msd{0.01} & -0.11 \msd{0.25} & \textbf{0.39} \msd{0.13} & \textbf{0.39} \msd{0.04} & 0.72 \msd{0.00} \\
+KS-Mean & 0.82 \msd{0.05} & \textbf{0.68} \msd{0.15} & 0.74 \msd{0.03} & 0.78 \msd{0.01} & \textbf{0.19} \msd{0.04} & 0.33 \msd{0.09} & 0.39 \msd{0.04} & 0.72 \msd{0.00} \\
+KS-Marginal & 0.79 \msd{0.03} & 0.50 \msd{0.03} & 0.57 \msd{0.02} & 0.87 \msd{0.01} & 0.08 \msd{0.08} & 0.19 \msd{0.01} & 0.32 \msd{0.02} & \textbf{0.85} \msd{0.01} \\
+\addlinespace
+KS-VAEAC & 0.39 \msd{0.24} & 0.54 \msd{0.10} & \textbf{0.78} \msd{0.03} & \textbf{0.88} \msd{0.01} & 0.02 \msd{0.04} & 0.08 \msd{0.01} & 0.30 \msd{0.05} & 0.80 \msd{0.01} \\
+KS-Flow & 0.42 \msd{0.16} & 0.52 \msd{0.07} & 0.61 \msd{0.05} & 0.86 \msd{0.01} & 0.05 \msd{0.03} & 0.12 \msd{0.01} & 0.26 \msd{0.03} & 0.81 \msd{0.01} \\
+\bottomrule
+\end{tabular}}
+\end{table}

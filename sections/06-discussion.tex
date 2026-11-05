@@ -1,0 +1,23 @@
+% =====================================================================
+% =====================================================================
+\section{Limitations and Conclusions}
+\label{sec:discussion}
+% =====================================================================
+
+MotionBench-XAI exposes and compares the design choices behind game-theoretic explanations for spatiotemporal machine learning. The benchmark grades ten attribution methods against exact ground truths on five designed datasets, runs the same pipeline on three real ones, and distills the outcome into useful insights. We conclude with two limitations that offer promising avenues for future work. First, the oracle construction is limited to Gaussian-field and copula families: extending exact ground truths to richer designed manifolds, such as articulated dynamics and discrete events, would widen the benchmark's reach. Second, the suite's dimensions are moderate ($J \leq 17$, $M \leq 68$) and its real-data conclusions are specific to the evaluated checkpoints: scaling to finer granularities and more architectures could better characterize real-world explanation scenarios. Overall, we look forward to MotionBench-XAI powering more intentional and practical use of Shapley explanation in applied spatiotemporal settings.
+
+% so that any Shapley explanation of spatiotemporal data can be built intentionally designed and measured.
+
+% The benchmark has limits. Its oracle
+% construction covers Gaussian-field and copula families, and richer designed
+% manifolds (articulated dynamics, discrete events) are open. Real-data
+% conclusions are specific to the evaluated checkpoints: CARE-PD's two
+% architectures already select different best methods. At the finest
+% granularity ($M{=}68$) the grading error is measured and reported, but
+% nonzero, and the suite's dimensions are moderate ($J \leq 17$,
+% $M \leq 68$): scaling further raises grading cost, not validity, and the
+% measured floors of Result~3 quantify that cost. Within these limits, the
+% conclusion stands: a Shapley explanation of spatiotemporal data depends on
+% four design choices, and MotionBench-XAI quantifies, for the first time,
+% the impact of each choice and their interactions. All code, data
+% generators, and evaluation pipelines are released for reuse.

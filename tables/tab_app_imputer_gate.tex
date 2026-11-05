@@ -1,0 +1,26 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Imputer capability check}: hide-one-recover correlation between the imputed conditional mean and the hidden ground truth, per player-set mask family (mean $\pm$ spread over masks; 3 folds, 24 sequences per fold, 8 draws). \emph{Donor}: copy the hidden entries from the most-correlated other unit of the same sequence -- the recovery available from raw redundancy alone. \emph{Unconditional}: imputer run with everything hidden. A learned imputer conditions on the visible context exactly when its recovery clears both controls.}
+\label{tab:app-imputer-gate}
+\footnotesize
+\begin{tabular}{llccc}
+\toprule
+Dataset & Imputer & Spatial & Temporal & Cell \\
+\midrule
+CARE-PD & VAEAC & 1.00 \msd{0.00} & 0.96 \msd{0.12} & 1.00 \msd{0.00} \\
+ & Flow & 1.00 \msd{0.00} & 1.00 \msd{0.01} & 1.00 \msd{0.00} \\
+ & Donor control & 0.97 & 0.98 & 0.98 \\
+ & Unconditional & \multicolumn{3}{c}{0.99 (all families)} \\
+\addlinespace
+PTB-XL & VAEAC & 0.96 \msd{0.09} & 0.05 \msd{0.10} & 0.98 \msd{0.07} \\
+ & Flow & 0.95 \msd{0.12} & 0.10 \msd{0.15} & 0.99 \msd{0.04} \\
+ & Donor control & -0.01 & -0.01 & -0.01 \\
+ & Unconditional & \multicolumn{3}{c}{0.00 (all families)} \\
+\addlinespace
+ESC-50 & VAEAC & 0.87 \msd{0.24} & 0.31 \msd{0.35} & 0.36 \msd{0.39} \\
+ & Flow & 0.88 \msd{0.17} & 0.29 \msd{0.33} & 0.37 \msd{0.39} \\
+ & Donor control & 0.62 & 0.16 & 0.12 \\
+ & Unconditional & \multicolumn{3}{c}{0.75 (all families)} \\
+\bottomrule
+\end{tabular}
+\end{table}

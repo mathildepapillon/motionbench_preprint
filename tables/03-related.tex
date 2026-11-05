@@ -1,0 +1,127 @@
+
+\section{Related Work}
+\label{sec:related}
+
+\begin{table}[t]
+\centering
+\caption{\textbf{Related evaluation resources and method studies.}
+Reference information varies across resources: localization masks and
+relative-importance constraints are not numerical Shapley oracles.}
+\label{tab:related_benchmarks}
+\setlength{\tabcolsep}{3pt}
+\scriptsize
+\begin{tabular}{p{0.27\linewidth}p{0.17\linewidth}p{0.47\linewidth}}
+\toprule
+Resource / study & Data setting & Reference information or focus \\
+\midrule
+Quantus~\citep{hedstrom2023quantus}
+ & General XAI & Metric toolkit; reference information supplied by the evaluation setup. \\
+BAM~\citep{Yang2019BenchmarkingAM}
+ & Images & Controlled comparisons with known relative feature importance. \\
+CLEVR-XAI~\citep{arras2022clevr}
+ & Synthetic VQA & Ground-truth spatial masks. \\
+\citet{olsen2022using}
+ & Tabular & Shapley references from known conditional laws; real-data application. \\
+XTSC-Bench~\citep{hollig2023xtsc}
+ & Time series & Synthetic informative-region references and standardized metrics. \\
+xaitimesynth~\citep{baer2026xaitimesynth}
+ & Time series & Injected-feature localization masks. \\
+TimeSHAP~\citep{bento2021timeshap}
+ & Sequences & Feature, timestep and cell attribution granularities. \\
+ShaTS~\citep{de2025shats}
+ & Time series & Temporal, sensor/actuator and process groupings. \\
+GroupSegment-SHAP~\citep{kim2026groupsegment}
+ & Time series & Joint group-segment players; real-data and synthetic pattern-recovery evaluation. \\
+\textbf{MotionBench-XAI}
+ & Spatiotemporal & Game-specific references; common imputer and player-set comparison. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Prior work develops dependence-aware Shapley attribution, temporal and grouped player definitions, and explanation-evaluation tools. MotionBench-XAI studies how these choices interact in a common evaluation protocol for spatiotemporal data, comparing imputers and player sets against reference explanations defined for the corresponding cooperative games.
+
+\paragraph{Dependence-aware and temporal Shapley attribution.}
+In the usual marginal-background implementation of KernelSHAP~\citep{lundberg2017unified}, missing features are replaced using background values without conditioning on the observed features. When features are dependent, the resulting combinations can be implausible or off-manifold~\citep{frye2021shapley}. Approaches to conditional Shapley estimation include empirical and copula-based conditioning~\citep{aas2021explaining,aas2021vineexplaining}, conditional inference trees~\citep{redelmeier2020explaining}, and variational conditioning~\citep{olsen2022using} based on VAEAC~\citep{ivanov2018variational}. ManifoldShap instead restricts interventional evaluations to a specified domain of
+validity~\citep{taufiq2023manifold}. A related approach studies transport-based paths for Aumann--Shapley attribution~\citep{zhang2026axiomatic}.
+
+Temporal methods adapt the explanatory units and estimation procedures. TimeSHAP provides feature-, timestep-, and cell-level attributions~\citep{bento2021timeshap}; WindowSHAP groups temporal intervals~\citep{NAYEBI2023104438}; and other work develops temporal surrogates and time-consistent attributions~\citep{villani2022feature}. ShaTS studies multiple temporal and feature groupings~\citep{de2025shats}. GroupSegment-SHAP constructs joint variable-group and time-segment players using cross-variable dependence and temporal segmentation~\citep{kim2026groupsegment}.
+ % Player construction and missing-value completion are distinct choices: dependence-aware grouping does not by itself provide conditional samples. For example, ShaTS uses background-data substitution, whereas GroupSegment-SHAP uses mean replacement in its main configuration.
+
+Marginal and conditional games encode different explanatory questions ~\citep{janzing2020feature,chen2020true,sundararajan2020many, kumar2020problems}. We therefore evaluate them against separate reference attributions defined for the corresponding games and player sets
+(\S\ref{sec:bg-gt}). Work on amortized estimators~\citep{jethani2022fastshap} and improved regression-based estimation~\citep{covert2021improving} addresses computational efficiency. 
+% To isolate the effects of imputation and player design, our comparison uses a common Shapley-estimation protocol
+% (Appendix~\ref{app:coalition_protocol}).
+% Confirm that a common estimator is actually used and describe exceptions.
+% Distinguish adapted imputers/player definitions from original algorithms.
+
+\paragraph{Explanation evaluation.} Fixed-model deletion tests can confound feature importance with the distribution shift caused by replacing inputs. ROAR addresses thus introducing retraining~\citep{hooker2019roar}. Other work studies faithfulness, sensitivity, and the dependence of evaluation outcomes on metric choices and parameterization~\citep{bhatt2020evaluating, hedstrom2023quantus}. % Our metric-disagreement analysis (Result~5) examines these issues for imputer-based Shapley evaluation on real spatiotemporal data (Appendix~\ref{app:eval_critique}).
+% Confirm the result number and that the experiments support this statement.
+
+\paragraph{Benchmarks and spatiotemporal applications.}
+Existing evaluation resources provide different kinds of reference information (Table~\ref{tab:related_benchmarks}). CLEVR-XAI proposes spatial localization masks~\citep{arras2022clevr}, BAM uses controlled relative feature importance~\citep{Yang2019BenchmarkingAM}, and Quantus provides a toolkit of evaluation metrics~\citep{hedstrom2023quantus}.
+XTSC-Bench and xaitimesynth include synthetic temporal data with known informative regions~\citep{hollig2023xtsc,baer2026xaitimesynth}. These localization references differ from numerical Shapley values for a
+specified model and game. \citet{olsen2022using} provides the latter type of reference in tabular simulations with known conditional distributions. Applications to human action and motion use DeepExplainer with reference samples~\citep{auletta2023predicting,tempel2025choose}. ShapGCN additionally validates explanations using GCN-specific edge
+perturbations~\citep{tempel2025explaining}. ECG analysis also employs gradient-based explanations~\citep{strodthoff2021ecg}.
+
+MotionBench-XAI builds on these lines of work by studying spatiotemporal player sets, conditional coalition completion, and ground truth comparisons together under a common evaluation protocol. % for spatiotemporal structure.
+
+% This states the intended combination, not a verified claim of being first.
+% Confirm that each component is implemented and evaluated in the manuscript.
+
+
+% % =====================================================================
+% \section{Related Work}
+% \label{sec:related}
+% % =====================================================================
+% % Ported from the v1 manuscript's related-work section (which read well),
+% % lightly adapted: it now FOLLOWS the Background, so every term it uses
+% % (off/on-manifold, players, ground truths, game-matched) is already defined.
+
+% We review existing Shapley attribution methods and highlight two gaps. First, no method targets spatiotemporal data: existing variants treat feature dependence or temporal structure, not both. Second, no existing benchmark evaluates attribution methods under spatiotemporal conditions and we describe below why the existing benchmarks do not transfer.
+
+% \paragraph{Manifold-aware and temporal Shapley attribution.}
+% The original
+% KernelSHAP~\citep{lundberg2017unified} imputes absent players by drawing from the marginal distribution. These draws produce \emph{off-manifold} samples and explanations that evaluate the model on inputs never seen in training~\citep{frye2021shapley}. To address this issue, several on-manifold imputers have been proposed. They span empirical and copula conditioning~\citep{aas2021explaining,aas2021vineexplaining,
+% redelmeier2020explaining}, amortized variational
+% conditioning \citep{olsen2022using,ivanov2018variational}, and
+% optimal-transport flow matching~\citep{zhang2026axiomatic,taufiq2023manifold}. However, none of these imputers exploits the spatiotemporal dependencies that define the manifold, and none produces Shapley values localized in both space and time.
+% A separate line of research extends Shapley attribution to time series through per-event reformulation, windowing, or surrogate models~\citep{bento2021timeshap,NAYEBI2023104438,villani2022feature,
+% de2025shats,kim2026groupsegment}, all built over zero or marginal-donor fills. Neither line is benchmarked on data with both feature dependence and temporal structure. Additionally, the field disagrees on which cooperative game should be played to provide the most insightful explanations, the so-called marginal or conditional games~\citep{janzing2020feature,chen2020true,sundararajan2020many,
+% kumar2020problems}. The games provide different notions of what the ground-truth explanation should be. We therefore treat the two as separate targets with separate ground truths (\S\ref{sec:bg-gt}). A further line of work speeds up the KernelSHAP estimation step itself, through amortized
+% estimators~\citep{jethani2022fastshap} or variance-reduced
+% regression~\citep{covert2021improving}. We hold that step fixed across all methods (Appendix~\ref{app:coalition_protocol}).
+
+% \paragraph{Critiques of explanation evaluation.}
+% Deletion-style evaluations conflate attribution quality with the distribution shift they induce~\citep{hooker2019roar}, and faithfulness metrics inherit related instabilities~\citep{bhatt2020evaluating,hedstrom2023quantus}. Our
+% metric-disagreement finding (Result~5) extends this lineage to imputer-based Shapley evaluation on real spatiotemporal data (Appendix~\ref{app:eval_critique}).
+
+% \paragraph{Explanation benchmarks and spatiotemporal applications.}
+% On the application side, SHAP on human motion uses standard imputers~\citep{tempel2025choose,auletta2023predicting} or is
+% architecture-specific~\citep{tempel2025explaining}, and gradient saliency on 12-lead ECG~\citep{strodthoff2021ecg} has neither manifold-aware imputation
+% nor player-set design. Synthetic suites with controllable ground truth have been instrumental~\citep{arras2022clevr,hedstrom2023quantus,
+% Yang2019BenchmarkingAM,hollig2023xtsc,baer2026xaitimesynth}. No existing benchmark tackles Shapley oracles, manifold-aware imputation, temporal structure, and multiple player sets at once (Table~\ref{tab:related_benchmarks}), motivating MotionBench-XAI.
+
+% \begin{table}[t]
+% \centering
+% \caption{\textbf{Comparison of XAI benchmarks on the design axes of this
+% paper.}  ``Synth GT'' = synthetic ground-truth attributions (oracle Shapley
+% values, $^\dagger$binary localization mask only), ``Manifold'' =
+% manifold-aware imputation evaluated, ``Temporal'' = temporal/sequential data
+% structure, ``Multi-PS'' = multiple player sets compared.}
+% \label{tab:related_benchmarks}
+% \setlength{\tabcolsep}{3pt}
+% \scriptsize
+% \begin{tabular}{lcccccc}
+% \toprule
+% Benchmark & Domain & Synth GT & Real data & Manifold & Temporal & Multi-PS \\
+% \midrule
+% Quantus~\citep{hedstrom2023quantus}      & image/NLP      & \checkmark & \checkmark & \ding{55} & \ding{55} & \ding{55} \\
+% \citet{Yang2019BenchmarkingAM}           & image          & \checkmark & \checkmark & \ding{55} & \ding{55} & \ding{55} \\
+% \citet{arras2022clevr}                   & image          & \checkmark & \ding{55}  & \ding{55} & \ding{55} & \ding{55} \\
+% \citet{olsen2022using}                   & tabular        & \checkmark & \checkmark & \checkmark & \ding{55} & \ding{55} \\
+% XTSC-Bench~\citep{hollig2023xtsc}        & time series    & \ding{55}  & \checkmark & \ding{55} & \checkmark & \ding{55} \\
+% xaitimesynth~\citep{baer2026xaitimesynth} & time series   & $\checkmark^\dagger$ & \ding{55} & \ding{55} & \checkmark & \ding{55} \\
+% \textbf{MotionBench-XAI (ours)}          & spatiotemporal & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+% \bottomrule
+% \end{tabular}
+% \end{table}

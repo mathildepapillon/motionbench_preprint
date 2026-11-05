@@ -1,0 +1,48 @@
+% =====================================================================
+\section{Datasets}
+\label{sec:datasets}
+% =====================================================================
+
+\subsection{Synthetic datasets: designed distributions with oracles}
+\label{sec:datasets-synth}
+
+We generate five synthetic datasets with computable marginal and conditional imputations (Appendix~\ref{app:oracle_proofs}). Our five synthetic datasets (Table~\ref{tab:datasets}) vary along three specific
+axes:
+
+\textbf{1. Marginal family.}~\texttt{gauss} draws Gaussian coordinates. \texttt{burr} pushes the same latent sequence through a symmetric heavy-tailed Burr copula (tail index $4$), testing whether conclusions survive non-Gaussian marginals.
+
+\textbf{2. Spatial structure.} \texttt{skeleton} uses a joint-correlation matrix inspired by the Human3.6M skeleton  \citep{ionescu2014human36m} ($J{=}17$ joints), giving the strong cross-joint coupling of real motion capture.  \texttt{gauss} and \texttt{burr} use weak coupling ($J{=}5$).
+
+\textbf{3. Temporal structure.}  \texttt{gauss}, \texttt{burr}, and  \texttt{skeleton} use autoregressive temporal correlation. \texttt{gait} and \texttt{skel+gait} use a gait-inspired \emph{periodic} temporal correlation.
+
+Each synthetic dataset defines a three-class classification task. To label a sequence, we average the coordinates of its first joint over all frames, which gives one label per sequence. We then split the sequences into three equally sized classes according to this label. For each dataset we train three classifier architectures. An MLP
+sees only the mean of each temporal window, while a 1-D convolutional
+network \citep{lecun1998gradient} and a Transformer
+\citep{vaswani2017attention} see the raw frames.
+Training details are in Appendix~\ref{app:experiment_details}.
+
+\begin{table}[t]
+  \centering
+  \caption{\textbf{The five synthetic datasets.} All are tensors $\x \in \mathbb{R}^{J\times 3\times T}$. The columns give each dataset's spatial coupling, temporal correlation, and marginal distribution, with the full construction in Appendix~\ref{app:oracle_proofs}. $K$ is the number of temporal windows and $M = J \times K$ the number of joint$\times$window cells. Each dataset has $N{=}200$ evaluation sequences.}
+  \label{tab:datasets}
+  \footnotesize
+  \newcommand{\dsicon}[1]{\raisebox{-0.25ex}{\includegraphics[height=1.7ex]{figures/#1}}}
+  \begin{tabular}{clccccccc}
+    \toprule
+    & Dataset & Spatial coupling $\Sigma_J$ & Temporal $\Sigma_T$ & Marginal & $J$ & $T$ & $K$ & $M$ \\
+    \midrule
+    \dsicon{icon_gauss.pdf}    & \texttt{gauss}  & low            & AR(1)    & Gaussian & $5$  & $16$ & $4$ & $20$ \\
+    \dsicon{icon_burr.pdf}     & \texttt{burr}   & low            & AR(1)    & Burr     & $5$  & $20$ & $5$ & $25$ \\
+    \dsicon{icon_skel.pdf}     & \texttt{skeleton}   & high (H3.6M)   & AR(1)    & Gaussian & $17$ & $16$ & $4$ & $68$ \\
+    \dsicon{icon_wave.pdf}     & \texttt{gait}       & uncoupled      & periodic & Gaussian & $17$ & $16$ & $4$ & $68$ \\
+    \dsicon{icon_skelgait.pdf} & \texttt{skel+gait}  & high (H3.6M)   & periodic & Gaussian & $17$ & $16$ & $4$ & $68$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Real-world datasets}
+\label{sec:datasets-real}
+
+MotionBench-XAI includes three public datasets spanning spatiotemporal modalities and application domains of particular interest for explanation. \textbf{CARE-PD} \citep{adeli2025multi}: 3-D skeletons of people walking ($J{=}17$). The goal is to predict the patient's Parkinson's severity score. We consider pre-trained architectures (MotionBert \citep{zhu2023motionbert} and MotionAGFormer \citep{mehraban2024motionagformer}), reported as models A and B, over three leave-one-subject-out folds. \textbf{PTB-XL} \citep{wagner2020ptbxl}: recordings of a 12-lead electrocardiogram. The model (a per-fold 1-D ResNet) predicts normal cardiac health or myocardial infarction. \textbf{ESC-50} \citep{piczak2015esc}: 5-second environmental audio clips over 50 classes. We explain the Audio Spectrogram Transformer (AST) \citep{gong2021ast}. Further details are provided in Appendix~\ref{app:real_data_table}.
+
+

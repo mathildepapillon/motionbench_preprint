@@ -1,0 +1,57 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Synthetic results, spatial and spatiotemporal players.} EC3, mean $\pm$ spread across the accuracy-passing classifier architectures, game-matched grading. Gray represents periodic data (Result 1) and is excluded from per-column best.}
+\label{tab:synth-spatial}
+\label{tab:synth-cells}
+\footnotesize
+(a) \emph{Spatial players (one player per joint; $J{=}5$ or $17$)}\\[2pt]
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+& Method & \texttt{gauss} & \texttt{skeleton} & \texttt{burr} & \texttt{gait} & \texttt{skel+gait} \\
+\midrule
+
+\multirow{2}{*}{\parbox{1.7cm}{\emph{Standard}\\\emph{imputers}}}
+& KS-Marginal & 0.32 \msd{0.03} & 0.20 \msd{0.08} & 0.30 \msd{0.02} & \textbf{0.17} \msd{0.15} & 0.16 \msd{0.09} \\
+& KS-Empirical & 0.40 \msd{0.02} & 0.28 \msd{0.05} & 0.41 \msd{0.03} & 0.26 \msd{0.13} & 0.27 \msd{0.09} \\
+
+\addlinespace
+
+\multirow{3}{*}{\parbox{1.7cm}{\emph{Generative}\\\emph{imputers}}}
+& KS-VAEAC & \textbf{0.19} \msd{0.06} & \textbf{0.13} \msd{0.02} & \textbf{0.16} \msd{0.06} & 0.19 \msd{0.15} & 0.22 \msd{0.05} \\
+& KS-Flow & 0.29 \msd{0.06} & 0.23 \msd{0.06} & 0.35 \msd{0.07} & 0.17 \msd{0.14} & 0.19 \msd{0.07} \\
+& KS-Gauss (closed form) & 0.21 \msd{0.07} & 0.17 \msd{0.04} & 0.25 \msd{0.08} & 0.22 \msd{0.15} & \textbf{0.14} \msd{0.07} \\
+
+\midrule
+
+& KS-Oracle (reference) & 0.18 \msd{0.07} & 0.10 \msd{0.04} & 0.19 \msd{0.07} & 0.16 \msd{0.14} & 0.08 \msd{0.04} \\
+
+\bottomrule
+\end{tabular}
+
+
+(b) \emph{Spatiotemporal players (joint$\times$window cells; $M{=}20$--$68$)}\\[2pt]
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+& Method & \texttt{gauss} & \texttt{skeleton} & \texttt{burr} & \texttt{gait} & \texttt{skel+gait} \\
+\midrule
+
+\multirow{2}{*}{\parbox{1.7cm}{\emph{Standard}\\\emph{imputers}}}
+& KS-Marginal & 0.19 \msd{0.04} & 0.22 \msd{0.05} & 0.24 \msd{0.01} & \textbf{0.16} \msd{0.12} & \textbf{0.14} \msd{0.09} \\
+& KS-Empirical & 0.35 \msd{0.00} & 0.33 \msd{0.02} & 0.39 \msd{0.00} & 0.26 \msd{0.11} & 0.23 \msd{0.10} \\
+
+\addlinespace
+
+\multirow{3}{*}{\parbox{1.7cm}{\emph{Generative}\\\emph{imputers}}}
+& KS-VAEAC & 0.20 \msd{0.05} & \textbf{0.22} \msd{0.02} & \textbf{0.24} \msd{0.03} & \textcolor{gray}{0.48 \msd{0.09}} & \textcolor{gray}{0.57 \msd{0.01}} \\
+& KS-Flow & 0.26 \msd{0.05} & 0.29 \msd{0.05} & 0.32 \msd{0.03} & \textcolor{gray}{0.40 \msd{0.11}} & \textcolor{gray}{0.53 \msd{0.01}} \\
+& KS-Gauss (closed form) & \textbf{0.14} \msd{0.03} & 0.22 \msd{0.03} & 0.24 \msd{0.03} & \textcolor{gray}{0.38 \msd{0.13}} & \textcolor{gray}{0.36 \msd{0.07}} \\
+
+\midrule
+
+& KS-Oracle (reference) & 0.13 \msd{0.03} & 0.18 \msd{0.02} & 0.20 \msd{0.02} & 0.21 \msd{0.08} & 0.22 \msd{0.05} \\
+
+\bottomrule
+\end{tabular}
+\end{table}
